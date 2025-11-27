@@ -15,41 +15,27 @@ envContent.split('\n').forEach(line => {
   }
 });
 
-console.log('Loaded EXPO_PUBLIC_SUPABASE_URL:', envVars.EXPO_PUBLIC_SUPABASE_URL);
-console.log('Loaded EXPO_PUBLIC_SUPABASE_ANON_KEY exists:', !!envVars.EXPO_PUBLIC_SUPABASE_ANON_KEY);
-
-export default {
+module.exports = {
   expo: {
     name: 'HackQuali',
-    slug: 'hackquali',
+    slug: 'hackquali-app',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/icon.png',
-    userInterfaceStyle: 'light',
-    splash: {
-      image: './assets/splash.png',
-      resizeMode: 'contain',
-      backgroundColor: '#ffffff',
-    },
-    assetBundlePatterns: ['**/*'],
-    ios: {
-      supportsTabletMode: true,
-    },
+    icon: './assets/images/icon.png',
+    userInterfaceStyle: 'automatic',
+    plugins: ['expo-router'],
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#E6F4FE',
+        foregroundImage: './assets/images/android-icon-foreground.png',
       },
+      package: 'com.hackquali.app',
     },
     web: {
-      bundler: 'metro',
       output: 'static',
+      favicon: './assets/images/favicon.png',
     },
-    plugins: ['expo-router'],
     extra: {
-      eas: {
-        projectId: 'seu-projeto-id',
-      },
       // Injeta as variáveis do .env.local aqui
       EXPO_PUBLIC_SUPABASE_URL: envVars.EXPO_PUBLIC_SUPABASE_URL || '',
       EXPO_PUBLIC_SUPABASE_ANON_KEY: envVars.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',

@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const { login, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [tapCount, setTapCount] = useState(0);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,10 +33,22 @@ export default function LoginScreen() {
     }
   };
 
+  const handleTestTap = () => {
+    const newCount = tapCount + 1;
+    setTapCount(newCount);
+    
+    if (newCount >= 5) {
+      setTapCount(0);
+      router.push('/auth-test');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>HackQuali</Text>
+        <TouchableOpacity onPress={handleTestTap}>
+          <Text style={styles.title}>HackQuali</Text>
+        </TouchableOpacity>
         <Text style={styles.subtitle}>Assistência Técnica Pós-Obra</Text>
 
         <View style={styles.formContainer}>
