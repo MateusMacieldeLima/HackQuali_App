@@ -17,7 +17,7 @@ export default function Home() {
         if (user.role === 'resident') {
           router.replace('/(resident)/(tabs)/home');
         } else if (user.role === 'contractor') {
-          router.replace('/(contractor)/(tabs)/dashboard');
+         router.replace('/(resident)/(tabs)/home');
         } else {
           router.replace('/(auth)/login');
         }

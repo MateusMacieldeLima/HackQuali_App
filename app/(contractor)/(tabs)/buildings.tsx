@@ -19,8 +19,8 @@ export default function ContractorBuildingsScreen() {
       const { data, error } = await supabase
         .from('buildings')
         .select('*')
-        .eq('contractorId', user.id)
-        .order('createdAt', { ascending: false });
+        .eq('contractor_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setBuildings(data || []);

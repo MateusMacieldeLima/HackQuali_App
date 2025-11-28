@@ -51,14 +51,6 @@ export default function ContractorTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Relatórios',
-          tabBarIcon: ({ color }) => <FontAwesome name="bar-chart" size={24} color={color} />,
-          headerTitle: 'Relatórios e Analytics',
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',

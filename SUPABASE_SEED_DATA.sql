@@ -10,8 +10,8 @@
 -- Contractor (Empresa de Construção)
 INSERT INTO public.users (id, email, full_name, role, phone_number, cpf, metadata)
 VALUES (
-  '550e8400-e29b-41d4-a716-446655440001',
-  'contractor@example.com',
+  'ae8132c7-4851-44f1-a869-daea760bb163',
+  'gustavo.fc.cfc@gmail.com',
   'QualiConstrutora LTDA',
   'contractor',
   '6133334444',
@@ -22,16 +22,13 @@ VALUES (
 -- Residents (Moradores)
 INSERT INTO public.users (id, email, full_name, role, phone_number, cpf, metadata)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440002', 'joao.silva@example.com', 'João Silva', 'resident', '61999998888', '12345678902', '{"verified": true}'::jsonb),
-  ('550e8400-e29b-41d4-a716-446655440003', 'maria.santos@example.com', 'Maria Santos', 'resident', '61999997777', '12345678903', '{"verified": true}'::jsonb),
-  ('550e8400-e29b-41d4-a716-446655440004', 'carlos.oliveira@example.com', 'Carlos Oliveira', 'resident', '61999996666', '12345678904', '{"verified": true}'::jsonb)
+  ('743edad0-d7ce-4431-9238-7b57984a6430', 'gu@gu', 'João Silva', 'resident', '61999998888', '12345678902', '{"verified": true}'::jsonb)
 ON CONFLICT DO NOTHING;
 
 -- Technicians (Técnicos)
 INSERT INTO public.users (id, email, full_name, role, company_id, phone_number, cpf, metadata)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440005', 'tecnico.pedro@example.com', 'Pedro Técnico', 'technician', '550e8400-e29b-41d4-a716-446655440001', '61988885555', '12345678905', '{"specialization": "Hidráulica"}'::jsonb),
-  ('550e8400-e29b-41d4-a716-446655440006', 'tecnico.ana@example.com', 'Ana Técnica', 'technician', '550e8400-e29b-41d4-a716-446655440001', '61988884444', '12345678906', '{"specialization": "Elétrica"}'::jsonb)
+  ('1142e2d6-3306-49fb-8bcb-e6c387395f35', 'tecnico.pedro@example.com', 'Pedro Técnico', 'technician', '550e8400-e29b-41d4-a716-446655440001', '61988885555', '12345678905', '{"specialization": "Hidráulica"}'::jsonb)
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
@@ -42,7 +39,7 @@ INSERT INTO public.buildings (id, contractor_id, name, address, city, state, zip
 VALUES 
   (
     '650e8400-e29b-41d4-a716-446655440001',
-    '550e8400-e29b-41d4-a716-446655440001',
+    'ae8132c7-4851-44f1-a869-daea760bb163',
     'Residencial Central Park',
     'Rua das Flores, 123',
     'Porto Velho',
@@ -54,7 +51,7 @@ VALUES
   ),
   (
     '650e8400-e29b-41d4-a716-446655440002',
-    '550e8400-e29b-41d4-a716-446655440001',
+    'ae8132c7-4851-44f1-a869-daea760bb163',
     'Edifício Vila Moderna',
     'Avenida Principal, 456',
     'Porto Velho',
@@ -99,7 +96,7 @@ VALUES
     '850e8400-e29b-41d4-a716-446655440001',
     '750e8400-e29b-41d4-a716-446655440001',
     '650e8400-e29b-41d4-a716-446655440001',
-    '550e8400-e29b-41d4-a716-446655440002',
+    '743edad0-d7ce-4431-9238-7b57984a6430',
     NULL,
     'open',
     'urgent',
@@ -121,8 +118,8 @@ VALUES
     '850e8400-e29b-41d4-a716-446655440002',
     '750e8400-e29b-41d4-a716-446655440002',
     '650e8400-e29b-41d4-a716-446655440001',
-    '550e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440006',
+    '743edad0-d7ce-4431-9238-7b57984a6430',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'assigned',
     'normal',
     'Lâmpada queimada no quarto',
@@ -143,8 +140,8 @@ VALUES
     '850e8400-e29b-41d4-a716-446655440003',
     '750e8400-e29b-41d4-a716-446655440003',
     '650e8400-e29b-41d4-a716-446655440001',
-    '550e8400-e29b-41d4-a716-446655440002',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '743edad0-d7ce-4431-9238-7b57984a6430',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'in_progress',
     'normal',
     'Tinta descascando na sala',
@@ -165,8 +162,8 @@ VALUES
     '850e8400-e29b-41d4-a716-446655440004',
     '750e8400-e29b-41d4-a716-446655440004',
     '650e8400-e29b-41d4-a716-446655440001',
-    '550e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '743edad0-d7ce-4431-9238-7b57984a6430',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'completed',
     'high',
     'Porta do guarda-roupa travada',
@@ -196,7 +193,7 @@ VALUES
   (
     '950e8400-e29b-41d4-a716-446655440001',
     '850e8400-e29b-41d4-a716-446655440002',
-    '550e8400-e29b-41d4-a716-446655440006',
+    '',
     '2025-11-29 10:00:00+00'::TIMESTAMP WITH TIME ZONE,
     '2025-11-29 11:00:00+00'::TIMESTAMP WITH TIME ZONE,
     NULL,
@@ -209,7 +206,7 @@ VALUES
   (
     '950e8400-e29b-41d4-a716-446655440002',
     '850e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     '2025-11-27 09:00:00+00'::TIMESTAMP WITH TIME ZONE,
     '2025-11-27 13:00:00+00'::TIMESTAMP WITH TIME ZONE,
     '2025-11-27 09:30:00+00'::TIMESTAMP WITH TIME ZONE,
@@ -222,7 +219,7 @@ VALUES
   (
     '950e8400-e29b-41d4-a716-446655440003',
     '850e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     '2025-11-26 14:00:00+00'::TIMESTAMP WITH TIME ZONE,
     '2025-11-26 16:00:00+00'::TIMESTAMP WITH TIME ZONE,
     '2025-11-26 14:30:00+00'::TIMESTAMP WITH TIME ZONE,
@@ -246,8 +243,8 @@ VALUES
   (
     'a50e8400-e29b-41d4-a716-446655440001',
     '850e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '743edad0-d7ce-4431-9238-7b57984a6430',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     5,
     4,
     5,
@@ -270,7 +267,7 @@ VALUES
   (
     'b50e8400-e29b-41d4-a716-446655440001',
     '850e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'open',
     'assigned',
     NULL,
@@ -280,7 +277,7 @@ VALUES
   (
     'b50e8400-e29b-41d4-a716-446655440002',
     '850e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'assigned',
     'in_progress',
     NULL,
@@ -290,7 +287,7 @@ VALUES
   (
     'b50e8400-e29b-41d4-a716-446655440003',
     '850e8400-e29b-41d4-a716-446655440004',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'in_progress',
     'completed',
     1.0,
@@ -302,7 +299,7 @@ VALUES
   (
     'b50e8400-e29b-41d4-a716-446655440004',
     '850e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'open',
     'assigned',
     NULL,
@@ -312,7 +309,7 @@ VALUES
   (
     'b50e8400-e29b-41d4-a716-446655440005',
     '850e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440005',
+    '1142e2d6-3306-49fb-8bcb-e6c387395f35',
     'assigned',
     'in_progress',
     NULL,

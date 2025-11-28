@@ -1,13 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { styles } from '../../src/styles/authStyles';
@@ -27,6 +27,7 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
+      router.push('/');
       // Navigation will be handled by AuthContext
     } catch (err) {
       Alert.alert('Erro de Login', error || 'Falha ao realizar login');

@@ -1,10 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { colors, styles } from '../../../src/styles/authStyles';
-import { supabase } from '../../../src/supabase';
-import { BuildingAnalytics } from '../../../src/types';
+import { useAuth } from '../src/contexts/AuthContext';
+import { colors, styles } from '../src/styles/authStyles';
+import { supabase } from '../src/supabase';
+import { BuildingAnalytics } from '../src/types';
 
 export default function ContractorAnalyticsScreen() {
   const { user } = useAuth();

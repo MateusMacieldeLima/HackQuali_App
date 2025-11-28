@@ -18,6 +18,7 @@ export default function ContractorProfileScreen() {
 
   const handleLogout = useCallback(async () => {
     await signOut();
+    router.push('/(auth)/login')
             
 }, [signOut, router]);
 
