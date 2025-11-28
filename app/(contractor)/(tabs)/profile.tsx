@@ -1,37 +1,25 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 
 export default function ContractorProfileScreen() {
   const router = useRouter();
-  const { user, logout, loading } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    Alert.alert('Desconectar', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
-      {
-        text: 'Desconectar',
-        onPress: async () => {
-          try {
-            await logout();
-            router.replace('/(auth)/login');
-          } catch (err) {
-            Alert.alert('Erro', 'Falha ao desconectar');
-          }
-        },
-        style: 'destructive',
-      },
-    ]);
-  };
+  const handleLogout = useCallback(async () => {
+    await signOut();
+            
+}, [signOut, router]);
 
   return (
     <ScrollView style={styles.container}>
@@ -134,16 +122,17 @@ export default function ContractorProfileScreen() {
       {/* Logout Button */}
       <View style={{ paddingHorizontal: 16, marginBottom: 40 }}>
         <TouchableOpacity
+          onPress={handleLogout}
           style={{
             backgroundColor: colors.danger,
             padding: 14,
             borderRadius: 8,
             alignItems: 'center',
+            opacity: isLoggingOut || authLoading ? 0.6 : 1,
           }}
-          onPress={handleLogout}
-          disabled={loading}
+          disabled={false}
         >
-          {loading ? (
+          {isLoggingOut || authLoading ? (
             <ActivityIndicator color="white" />
           ) : (
             <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>

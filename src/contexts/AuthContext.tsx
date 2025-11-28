@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(data.session.user.user_metadata?.role || 'resident');
       }
     } catch (err) {
-      console.error('Error checking user:', err);
+      console.error('❌ Erro ao verificar usuário:', err);
     } finally {
       setLoading(false);
     }
@@ -151,14 +151,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      setLoading(true);
       setError(null);
-      await supabase.auth.signOut();
+      console.log('🔐 Iniciando logout...');
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('❌ Erro no logout:', error);
+        throw error;
+      }
+      
+      // Limpar estado local
       setUser(null);
       setUserRole(null);
+      console.log('✅ Logout bem-sucedido');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao sair';
+      console.error('🔴 Erro no logout:', message);
       setError(message);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
