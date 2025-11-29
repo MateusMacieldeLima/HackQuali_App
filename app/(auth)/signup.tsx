@@ -9,6 +9,7 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    ImageBackground,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { styles } from '../../src/styles/authStyles';
@@ -67,8 +68,8 @@ export default function SignupScreen() {
       alignItems: 'center',
     },
     optionSelected: {
-      borderColor: '#0066CC',
-      backgroundColor: '#E6F4FE',
+      borderColor: '#ff9625',
+      backgroundColor: '#cdeaffff',
     },
     optionText: {
       fontSize: 14,
@@ -76,16 +77,45 @@ export default function SignupScreen() {
       fontWeight: '500',
     },
     optionTextSelected: {
-      color: '#0066CC',
+      color: '#ff9625',
       fontWeight: '600',
     },
   });
 
+  const localStyles = StyleSheet.create({
+    titleOverride: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#ff9625',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    subtitleOverride: {
+      fontSize: 14,
+      color: '#ffffff',
+      marginBottom: 24,
+      textAlign: 'center',
+    },
+    buttonOverride: {
+      backgroundColor: '#ff9625',
+    },
+    buttonTextOverride: {
+      color: '#ffffff',
+    },
+  });
+ 
+
   return (
-    <ScrollView style={styles.container}>
+    <ImageBackground
+      source={require('../../assets/images/login.avif')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.content}>
-        <Text style={styles.title}>Criar Conta</Text>
-        <Text style={styles.subtitle}>HackQuali</Text>
+        <Text style={localStyles.titleOverride}>Criar Conta</Text>
+        <Text style={localStyles.subtitleOverride}>HackQuali</Text>
 
         <View style={styles.formContainer}>
           <Text style={styles.label}>Nome</Text>
@@ -167,14 +197,18 @@ export default function SignupScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              localStyles.buttonOverride,
+              loading && styles.buttonDisabled,
+            ]}
             onPress={handleSignup}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Criar Conta</Text>
+              <Text style={[styles.buttonText, localStyles.buttonTextOverride]}>Criar Conta</Text>
             )}
           </TouchableOpacity>
 
@@ -186,5 +220,6 @@ export default function SignupScreen() {
         </View>
       </View>
     </ScrollView>
+    </ImageBackground>
   );
 }

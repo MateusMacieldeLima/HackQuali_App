@@ -2,9 +2,9 @@ import { StyleSheet } from 'react-native';
 
 export const colors = {
   primary: '#0066CC',
-  secondary: '#00CC99',
+  secondary: '#ff9625ff',
   danger: '#FF3333',
-  warning: '#FFB84D',
+  warning: '#e7ff4dff',
   success: '#00CC66',
   background: '#F5F7FA',
   text: '#1A1A1A',
@@ -18,6 +18,15 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  // usado quando a tela está dentro de um ImageBackground
+  background: {
+    flex: 1,
+  },
+  // overlay semi-transparente para melhorar contraste sobre a imagem
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.28)',
   },
   content: {
     flex: 1,

@@ -2,12 +2,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
@@ -15,7 +15,7 @@ import { supabase } from '../../../src/supabase';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout, loading } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const [editMode, setEditMode] = useState(false);
   const [unit, setUnit] = useState<any>(null);
   const [building, setBuilding] = useState<any>(null);
@@ -60,21 +60,12 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert('Desconectar', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
-      {
-        text: 'Desconectar',
-        onPress: async () => {
-          try {
-            await logout();
-            router.replace('/(auth)/login');
-          } catch (err) {
-            Alert.alert('Erro', 'Falha ao desconectar');
-          }
-        },
-        style: 'destructive',
-      },
-    ]);
+    try {
+      await signOut();
+      router.replace('/(auth)/login');
+    } catch (err) {
+      Alert.alert('Erro', 'Falha ao desconectar');
+    }      
   };
 
   return (
