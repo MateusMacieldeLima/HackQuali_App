@@ -1,16 +1,21 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import AddBuildingForm from '../(buildings)/AddBuilding';
+import BuildingDetails from '../(buildings)/BuildingDetails';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 import { Building } from '../../../src/types';
+
 
 export default function ContractorBuildingsScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [showAddBuilding, setShowAddBuilding] = useState(false);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
 
   const fetchBuildings = async () => {
     try {
@@ -41,8 +46,15 @@ export default function ContractorBuildingsScreen() {
     fetchBuildings();
   };
 
+  const toggleAddBuilding = () => {
+    setShowAddBuilding(!showAddBuilding); // Alterna entre mostrar/ocultar o formulário
+  };
+
   const renderBuildingItem = (building: Building) => (
-    <TouchableOpacity key={building.id} style={styles.card}>
+    <TouchableOpacity 
+    key={building.id} 
+    style={styles.card}
+    onPress={() => setSelectedBuilding(building)}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text }}>
@@ -60,6 +72,7 @@ export default function ContractorBuildingsScreen() {
     </TouchableOpacity>
   );
 
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -70,8 +83,22 @@ export default function ContractorBuildingsScreen() {
 
   return (
     <View style={styles.container}>
+      {showAddBuilding ? (
+        // Renderiza o formulário para adicionar prédio no lugar da lista
+        <AddBuildingForm
+          onClose={toggleAddBuilding}
+          onBuildingAdded={fetchBuildings} // Atualiza a lista ao adicionar
+        />
+      ) : selectedBuilding ? (
+        <BuildingDetails
+          building={selectedBuilding}
+          onClose={() => setSelectedBuilding(null)} // Fecha os detalhes
+        />
+      ) : (
+        <>
       <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
         <TouchableOpacity
+          onPress={toggleAddBuilding}
           style={{
             backgroundColor: colors.primary,
             padding: 12,
@@ -102,7 +129,10 @@ export default function ContractorBuildingsScreen() {
           <Text style={{ marginTop: 8, fontSize: 12, color: colors.textSecondary }}>
             Crie seu primeiro empreendimento
           </Text>
+          
         </View>
+         )}
+        </>
       )}
     </View>
   );
