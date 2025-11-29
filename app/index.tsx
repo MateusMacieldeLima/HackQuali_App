@@ -13,11 +13,12 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (user) {
+        console.log('User is authenticated:', user, user.role);
         // Se usuário está autenticado, redirecionar baseado no role
         if (user.role === 'resident') {
           router.replace('/(resident)/(tabs)/home');
         } else if (user.role === 'contractor') {
-         router.replace('/(resident)/(tabs)/home');
+         router.replace('/(contractor)/(tabs)/dashboard');
         } else {
           router.replace('/(auth)/login');
         }
