@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { supabase } from '../../../src/supabase';
 import { Appointment } from '../../../src/types';
+import { colors, styles } from '../../../src/styles/authStyles';
 
 export default function AppointmentsScreen() {
   const { user } = useAuth();
@@ -108,7 +109,7 @@ export default function AppointmentsScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       {appointments.length > 0 ? (
         <FlatList
           data={appointments}

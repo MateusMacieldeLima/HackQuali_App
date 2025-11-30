@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import AddBuildingForm from '../(buildings)/AddBuilding';
@@ -8,9 +9,9 @@ import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 import { Building } from '../../../src/types';
 
-
 export default function ContractorBuildingsScreen() {
   const { user } = useAuth();
+  const searchParams = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -41,20 +42,28 @@ export default function ContractorBuildingsScreen() {
     fetchBuildings();
   }, [user?.id]);
 
+  // Novo useEffect para verificar se deve abrir o formulário automaticamente
+  useEffect(() => {
+    if (searchParams.openAddForm === 'true') {
+      setShowAddBuilding(true);
+    }
+  }, [searchParams.openAddForm]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchBuildings();
   };
 
   const toggleAddBuilding = () => {
-    setShowAddBuilding(!showAddBuilding); // Alterna entre mostrar/ocultar o formulário
+    setShowAddBuilding(!showAddBuilding);
   };
 
   const renderBuildingItem = (building: Building) => (
     <TouchableOpacity 
-    key={building.id} 
-    style={styles.card}
-    onPress={() => setSelectedBuilding(building)}>
+      key={building.id} 
+      style={styles.card}
+      onPress={() => setSelectedBuilding(building)}
+    >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text }}>
@@ -72,7 +81,6 @@ export default function ContractorBuildingsScreen() {
     </TouchableOpacity>
   );
 
-
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -84,54 +92,53 @@ export default function ContractorBuildingsScreen() {
   return (
     <View style={styles.container}>
       {showAddBuilding ? (
-        // Renderiza o formulário para adicionar prédio no lugar da lista
         <AddBuildingForm
           onClose={toggleAddBuilding}
-          onBuildingAdded={fetchBuildings} // Atualiza a lista ao adicionar
+          onBuildingAdded={fetchBuildings}
         />
       ) : selectedBuilding ? (
         <BuildingDetails
           building={selectedBuilding}
-          onClose={() => setSelectedBuilding(null)} // Fecha os detalhes
+          onClose={() => setSelectedBuilding(null)}
+          onBuildingDeleted={fetchBuildings}
         />
       ) : (
         <>
-      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-        <TouchableOpacity
-          onPress={toggleAddBuilding}
-          style={{
-            backgroundColor: colors.primary,
-            padding: 12,
-            borderRadius: 8,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
-            + Novo Empreendimento
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+            <TouchableOpacity
+              onPress={toggleAddBuilding}
+              style={{
+                backgroundColor: colors.primary,
+                padding: 12,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
+                + Novo Empreendimento
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      {buildings.length > 0 ? (
-        <FlatList
-          data={buildings}
-          renderItem={({ item }) => renderBuildingItem(item)}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        />
-      ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
-          <FontAwesome name="building" size={48} color={colors.textSecondary} />
-          <Text style={{ marginTop: 16, fontSize: 16, fontWeight: '600', color: colors.text }}>
-            Nenhum empreendimento
-          </Text>
-          <Text style={{ marginTop: 8, fontSize: 12, color: colors.textSecondary }}>
-            Crie seu primeiro empreendimento
-          </Text>
-          
-        </View>
-         )}
+          {buildings.length > 0 ? (
+            <FlatList
+              data={buildings}
+              renderItem={({ item }) => renderBuildingItem(item)}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12 }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            />
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
+              <FontAwesome name="building" size={48} color={colors.textSecondary} />
+              <Text style={{ marginTop: 16, fontSize: 16, fontWeight: '600', color: colors.text }}>
+                Nenhum empreendimento
+              </Text>
+              <Text style={{ marginTop: 8, fontSize: 12, color: colors.textSecondary }}>
+                Crie seu primeiro empreendimento
+              </Text>
+            </View>
+          )}
         </>
       )}
     </View>

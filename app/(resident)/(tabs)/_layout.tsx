@@ -9,7 +9,7 @@ export default function ResidentTabLayout() {
     tabBarInactiveTintColor: colors.textSecondary,
     tabBarStyle: {
       backgroundColor: colors.white,
-      borderTopColor: colors.border,
+      borderTopColor: colors.primary,
       borderTopWidth: 1,
     },
     headerShown: true,
@@ -18,7 +18,7 @@ export default function ResidentTabLayout() {
       borderBottomColor: colors.border,
       borderBottomWidth: 1,
     },
-    headerTintColor: colors.text,
+    headerTintColor: colors.primary,
     headerTitleStyle: {
       fontWeight: '600',
     },

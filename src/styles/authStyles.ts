@@ -4,7 +4,9 @@ export const colors = {
   primary: '#0066CC',
   secondary: '#ff9625ff',
   danger: '#FF3333',
-  warning: '#e7ff4dff',
+  processing: '#f04646ff',
+  assigned: '#6e4af2ff',
+  warning: '#f2da04ff',
   success: '#00CC66',
   background: '#F5F7FA',
   text: '#1A1A1A',
@@ -17,8 +19,9 @@ export const styles = StyleSheet.create({
   // Auth styles
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
+    backgroundColor: colors.white,
+},
+
   // usado quando a tela está dentro de um ImageBackground
   background: {
     flex: 1,
@@ -153,8 +156,8 @@ export const styles = StyleSheet.create({
 
 export const statusColors: { [key: string]: string } = {
   open: colors.warning,
-  assigned: colors.secondary,
-  in_progress: colors.secondary,
+  assigned: colors.assigned,
+  in_progress: colors.processing,
   completed: colors.success,
   closed: colors.success,
   cancelled: colors.danger,

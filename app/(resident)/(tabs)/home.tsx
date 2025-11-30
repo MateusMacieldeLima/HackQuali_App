@@ -2,11 +2,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    RefreshControl,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
@@ -85,7 +85,7 @@ export default function ResidentHomeScreen() {
 
       {/* Stats Cards */}
       <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-        <View style={styles.card}>
+        <View style={[styles.card, { borderWidth: 1, borderColor: colors.warning }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <FontAwesome name="exclamation-circle" size={20} color={colors.warning} />
             <Text style={{ marginLeft: 12, fontSize: 14, color: colors.textSecondary }}>
@@ -96,28 +96,43 @@ export default function ResidentHomeScreen() {
             {stats.openRequests}
           </Text>
         </View>
+        
+        <View style={[
+            styles.card,
+            {
+              borderColor: colors.processing,
+              borderWidth: 1.5,
+            },
+          ]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <FontAwesome name="spinner" size={20} color={colors.processing} />
+            <Text style={{ marginLeft: 12, fontSize: 14, color: colors.textSecondary }}>
+              Solicitações Pendentes
+            </Text>
+          </View>
+          <Text style={{ fontSize: 32, fontWeight: 'bold', color: colors.text }}>
+            {stats.pendingRatings}
+          </Text>
+        </View>
 
-        <View style={styles.card}>
+        <View
+          style={[
+            styles.card,
+            {
+              borderColor: colors.success,
+              borderWidth: 1.5,
+            },
+          ]}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <FontAwesome name="check-circle" size={20} color={colors.success} />
             <Text style={{ marginLeft: 12, fontSize: 14, color: colors.textSecondary }}>
               Solicitações Concluídas
             </Text>
           </View>
+
           <Text style={{ fontSize: 32, fontWeight: 'bold', color: colors.text }}>
             {stats.completedRequests}
-          </Text>
-        </View>
-
-        <View style={styles.card}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <FontAwesome name="star" size={20} color={colors.secondary} />
-            <Text style={{ marginLeft: 12, fontSize: 14, color: colors.textSecondary }}>
-              Avaliações Pendentes
-            </Text>
-          </View>
-          <Text style={{ fontSize: 32, fontWeight: 'bold', color: colors.text }}>
-            {stats.pendingRatings}
           </Text>
         </View>
       </View>
@@ -148,7 +163,7 @@ export default function ResidentHomeScreen() {
           style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
           onPress={() => router.push('/(resident)/(tabs)/requests')}
         >
-          <FontAwesome name="list" size={24} color={colors.secondary} />
+          <FontAwesome name="list" size={24} color={colors.primary} />
           <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
             Ver Solicitações
           </Text>

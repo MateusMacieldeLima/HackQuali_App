@@ -16,6 +16,7 @@ export default function AddBuildingForm({ onClose, onBuildingAdded }: AddBuildin
     address: '',
     city: '',
     state: '',
+    description: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -79,6 +80,14 @@ export default function AddBuildingForm({ onClose, onBuildingAdded }: AddBuildin
         value={buildingData.state}
         onChangeText={(value) => handleInputChange('state', value)}
       />
+
+      <TextInput
+        placeholder="Descrição (opcional)"
+        style={styles.input}
+        value={buildingData.description}
+        onChangeText={(value) => handleInputChange('description', value)}
+      />
+
 
       <TouchableOpacity
         onPress={saveBuilding}
