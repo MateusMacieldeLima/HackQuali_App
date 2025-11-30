@@ -35,6 +35,14 @@ export default function TechnicianTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="scheduling"
+        options={{
+          title: 'Agendamentos',
+          tabBarIcon: ({ color }) => <FontAwesome name="calendar" size={24} color={color} />,
+          headerTitle: 'Meus Agendamentos',
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
