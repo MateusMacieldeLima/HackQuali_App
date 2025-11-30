@@ -1,18 +1,20 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 
 export default function ContractorDashboardScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -233,7 +235,10 @@ export default function ContractorDashboardScreen() {
         <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 12, color: colors.text }}>
           Ações Rápidas
         </Text>
-        <TouchableOpacity style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
+        <TouchableOpacity 
+          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
+          onPress={() => router.push('/(contractor)/(tabs)/buildings')}
+        >
           <FontAwesome name="plus-circle" size={20} color={colors.primary} />
           <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
             Novo Empreendimento
@@ -245,10 +250,13 @@ export default function ContractorDashboardScreen() {
             style={{ marginLeft: 'auto' }}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
+        <TouchableOpacity 
+          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
+          onPress={() => router.push('/(contractor)/(tabs)/tickets')}
+        >
           <FontAwesome name="tasks" size={20} color={colors.primary} />
           <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Ver Todos os Chamados
+            Ver Chamados em Aberto
           </Text>
           <FontAwesome
             name="chevron-right"

@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,28 +9,51 @@ import {
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
-import { colors, styles, statusColors } from '../../../src/styles/authStyles';
+import { colors, statusColors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 import { ServiceRequest } from '../../../src/types';
+import TicketDetails from '../tickets/TicketDetailsContractor';
 
 export default function ContractorTicketsScreen() {
   const { user } = useAuth();
+  const searchParams = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tickets, setTickets] = useState<ServiceRequest[]>([]);
   const [filter, setFilter] = useState<string>('all');
+  const [selectedTicket, setSelectedTicket] = useState<ServiceRequest | null>(null);
 
+  // Opções de filtro
+  const filterOptions = [
+    { key: 'all', label: 'Todos', icon: 'list' },
+    { key: 'open', label: 'Abertos', icon: 'circle-o' },
+    { key: 'assigned', label: 'Atribuídos', icon: 'user' },
+    { key: 'in_progress', label: 'Em Progresso', icon: 'clock-o' },
+    { key: 'completed', label: 'Concluídos', icon: 'check-circle' },
+    { key: 'closed', label: 'Fechados', icon: 'times-circle' },
+    { key: 'cancelled', label: 'Cancelados', icon: 'ban' },
+  ];
+
+  // useEffect para definir o filtro inicial baseado no parâmetro da rota
+  useEffect(() => {
+    if (searchParams.initialFilter) {
+      setFilter(String(searchParams.initialFilter));
+      setLoading(true);
+    }
+  }, [searchParams.initialFilter]);
+
+  // Busca de tickets no Supabase
   const fetchTickets = async () => {
     try {
       if (!user?.id) return;
 
       let query = supabase
         .from('service_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*, buildings(contractor_id)')
+        .order('created_at', { ascending: false })
+        .eq('buildings.contractor_id', user.id);
 
       if (filter !== 'all') {
         query = query.eq('status', filter);
@@ -47,9 +71,20 @@ export default function ContractorTicketsScreen() {
     }
   };
 
+  // Carrega tickets quando a tela monta ou quando o user muda
   useEffect(() => {
-    fetchTickets();
-  }, [user?.id, filter]);
+    if (user?.id) {
+      setLoading(true);
+      fetchTickets();
+    }
+  }, [user?.id]);
+
+  // Atualizar tickets ao trocar filtros
+  useEffect(() => {
+    if (user?.id && filter) {
+      fetchTickets();
+    }
+  }, [filter, user?.id]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -68,135 +103,145 @@ export default function ContractorTicketsScreen() {
     return labels[status] || status;
   };
 
-  const filterButtons = [
-    { label: 'Todos', value: 'all' },
-    { label: 'Abertos', value: 'open' },
-    { label: 'Em Progresso', value: 'in_progress' },
-    { label: 'Concluídos', value: 'completed' },
-  ];
+  // Renderiza os botões de filtro
+  const renderFilterButtons = () => (
+    <View style={filterStyles.container}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={filterStyles.scrollContainer}
+      >
+        {filterOptions.map((option) => (
+          <TouchableOpacity
+            key={option.key}
+            style={[
+              filterStyles.filterButton,
+              filter === option.key && filterStyles.activeFilterButton,
+            ]}
+            onPress={() => setFilter(option.key)}
+          >
+            <FontAwesome
+              name={option.icon as any}
+              size={16}
+              color={filter === option.key ? colors.white : colors.primary}
+              style={filterStyles.filterIcon}
+            />
+            <Text
+              style={[
+                filterStyles.filterText,
+                filter === option.key && filterStyles.activeFilterText,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
 
-  const localStyles = StyleSheet.create({
-    filterCard: {
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      borderRadius: 12,
-      marginRight: 12,
-      borderWidth: 1,
-      borderColor: colors.textSecondary,
-      backgroundColor: 'transparent',
-      minHeight: 36,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    filterCardActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    filterLabel: {
-      color: colors.textSecondary,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    filterLabelActive: {
-      color: colors.background,
-    },
-    topFilters: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 20,
-      paddingHorizontal: 16,
-      paddingTop: 6,
-      paddingBottom: 6,
-      backgroundColor: 'transparent',
-    },
-  });
-
-  const renderTicketItem = (ticket: ServiceRequest) => {
-    const statusColor = statusColors[ticket.status] || colors.textSecondary;
+  // Renderiza um ticket na lista
+  const renderTicketItem = ({ item }: { item: ServiceRequest }) => {
+    const statusColor = statusColors[item.status] || colors.textSecondary;
 
     return (
-      <TouchableOpacity key={String(ticket.id)} activeOpacity={0.8} style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
-        <View style={{ width: 52, height: 52, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12, backgroundColor: statusColor }}>
-          <FontAwesome name="inbox" size={22} color={colors.white} />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{ticket.title}</Text>
-          <Text style={{ marginTop: 6, fontSize: 13, color: colors.textSecondary }}>
-            {ticket.description ? `${ticket.description.substring(0, 80)}${ticket.description.length > 80 ? '...' : ''}` : ''}
+      <TouchableOpacity
+        onPress={() => setSelectedTicket(item)}
+        style={[styles.card, { flex: 1, marginBottom: 12 }]}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>
+            {item.title}
           </Text>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-            <View style={[styles.badge, { backgroundColor: statusColor }]}> 
-              <Text style={[styles.badgeText, { color: colors.white }]}>{getStatusLabel(ticket.status)}</Text>
-            </View>
-
-            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-              {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ''}
-            </Text>
+          <FontAwesome name="edit" size={20} color={colors.primary} />
+        </View>
+        <Text style={{ marginTop: 4, color: colors.textSecondary }}>{item.description}</Text>
+        <View style={{ marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={[styles.badge, { backgroundColor: statusColor }]}>
+            <Text style={[styles.badgeText, { color: colors.white }]}>{getStatusLabel(item.status)}</Text>
           </View>
+          <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+            Criado em: {new Date(item.createdAt).toLocaleDateString()}
+          </Text>
         </View>
       </TouchableOpacity>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      {/* Botões de Filtro (fixos no topo) */}
-      <View style={localStyles.topFilters} pointerEvents="box-none">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ alignItems: 'center' }}
-        >
-          {filterButtons.map((btn) => (
-            <TouchableOpacity
-              key={btn.value}
-              onPress={() => setFilter(btn.value)}
-              activeOpacity={0.8}
-              style={[
-                localStyles.filterCard,
-                filter === btn.value ? localStyles.filterCardActive : null,
-              ]}
-            >
-              <Text style={[localStyles.filterLabel, filter === btn.value ? localStyles.filterLabelActive : null]}>
-                {btn.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Lista de Chamados */}
-      {tickets.length > 0 ? (
-        <FlatList
-          data={tickets}
-          renderItem={({ item }) => renderTicketItem(item)}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 80 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      {selectedTicket ? (
+        <TicketDetails
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          onStatusChange={fetchTickets}
         />
       ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
-          <FontAwesome name="inbox" size={64} color={colors.textSecondary} />
-          <Text style={{ marginTop: 16, fontSize: 16, fontWeight: '600', color: colors.text }}>
-            Nenhum chamado
-          </Text>
-          <Text style={{ marginTop: 8, fontSize: 12, color: colors.textSecondary }}>
-            Não há chamados com esse filtro
-          </Text>
-        </View>
+        <>
+          {/* Filtros */}
+          {renderFilterButtons()}
+          
+          {loading ? (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : tickets.length === 0 ? (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+              <FontAwesome name="inbox" size={64} color={colors.textSecondary} />
+              <Text style={{ marginTop: 16, fontSize: 16, color: colors.text }}>
+                Nenhum chamado encontrado.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={tickets}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={renderTicketItem}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              contentContainerStyle={{ padding: 16 }}
+            />
+          )}
+        </>
       )}
     </View>
   );
 }
+
+// Estilos para os filtros
+const filterStyles = {
+  container: {
+    backgroundColor: colors.white,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  scrollContainer: {
+    paddingRight: 16,
+  },
+  filterButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
+  },
+  activeFilterButton: {
+    backgroundColor: colors.primary,
+  },
+  filterIcon: {
+    marginRight: 6,
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: colors.primary,
+  },
+  activeFilterText: {
+    color: colors.white,
+  },
+};
