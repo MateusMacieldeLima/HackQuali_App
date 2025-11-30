@@ -146,11 +146,13 @@ export default function ContractorDashboardScreen() {
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
           <View style={{ flex: 1 }}>
             <View
-              style={[
+                style={[
                 styles.card,
-                { backgroundColor: colors.warning + '15', paddingVertical: 12 },
-              ]}
-            >
+                {
+                  borderColor: colors.warning,
+                  borderWidth: 1.5,
+                },
+              ]}>
               <FontAwesome name="clock-o" size={20} color={colors.warning} />
               <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 8, color: colors.text }}>
                 {stats.openRequests}
@@ -163,11 +165,13 @@ export default function ContractorDashboardScreen() {
           <View style={{ flex: 1 }}>
             <View
               style={[
-                styles.card,
-                { backgroundColor: colors.secondary + '15', paddingVertical: 12 },
-              ]}
-            >
-              <FontAwesome name="spinner" size={20} color={colors.secondary} />
+              styles.card,
+              {
+                borderColor: colors.processing,
+                borderWidth: 1.5,
+              },
+            ]}>
+              <FontAwesome name="spinner" size={20} color={colors.processing} />
               <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 8, color: colors.text }}>
                 {stats.assignedRequests}
               </Text>
@@ -179,10 +183,12 @@ export default function ContractorDashboardScreen() {
           <View style={{ flex: 1 }}>
             <View
               style={[
-                styles.card,
-                { backgroundColor: colors.success + '15', paddingVertical: 12 },
-              ]}
-            >
+            styles.card,
+            {
+              borderColor: colors.success,
+              borderWidth: 1.5,
+            },
+            ]}>
               <FontAwesome name="check-circle" size={20} color={colors.success} />
               <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 8, color: colors.text }}>
                 {stats.completedRequests}
@@ -211,7 +217,7 @@ export default function ContractorDashboardScreen() {
             </Text>
           </View>
           <View style={{ alignItems: 'center' }}>
-            <FontAwesome name="users" size={24} color={colors.secondary} />
+            <FontAwesome name="users" size={24} color={colors.primary} />
             <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 8, color: colors.text }}>
               {stats.technicians}
             </Text>
@@ -240,7 +246,7 @@ export default function ContractorDashboardScreen() {
           />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
-          <FontAwesome name="tasks" size={20} color={colors.secondary} />
+          <FontAwesome name="tasks" size={20} color={colors.primary} />
           <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
             Ver Todos os Chamados
           </Text>
