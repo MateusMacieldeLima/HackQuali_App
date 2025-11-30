@@ -289,58 +289,6 @@ export default function TestScheduling() {
     }
   };
 
-  const runBackfillResidents = async () => {
-    setIsLoading(true);
-    clearResults();
-    try {
-      console.log('🔁 [BACKFILL] Buscando agendamentos sem resident_id com service_request_id');
-      const { data: scheds, error: schedsError } = await supabase
-        .from('scheduling')
-        .select('id, service_request_id')
-        .is('resident_id', null)
-        .not('service_request_id', 'is', null)
-        .limit(500);
-
-      if (schedsError) throw schedsError;
-      const schedCount = scheds?.length || 0;
-
-      const serviceRequestIds = Array.from(new Set(scheds.map((s: any) => s.service_request_id).filter(Boolean)));
-
-      console.log('[BACKFILL] serviceRequestIds:', serviceRequestIds.length);
-      const { data: srs, error: srsError } = await supabase
-        .from('service_requests')
-        .select('id, requester_id')
-        .in('id', serviceRequestIds || []);
-
-      if (srsError) throw srsError;
-      const srMap = new Map<string, string>();
-      (srs || []).forEach((sr: any) => srMap.set(sr.id, sr.requester_id));
-
-      let updated = 0;
-      const updates: Promise<any>[] = [];
-      for (const s of scheds || []) {
-        const requester = srMap.get(s.service_request_id);
-        if (requester) {
-          updates.push((async () => {
-            const res = await supabase.from('scheduling').update({ resident_id: requester }).eq('id', s.id);
-            if (!res.error) updated += 1;
-            return res;
-          })());
-        }
-      }
-
-      await Promise.all(updates);
-
-      addResult('BACKFILL Residents', { success: true, schedulingFound: schedCount, updated });
-      console.log(`[BACKFILL] Completed - found=${schedCount} updated=${updated}`);
-    } catch (err) {
-      console.error('[BACKFILL] Error:', err);
-      addResult('BACKFILL Residents', { success: false, error: err });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const renderResult = (result: any, index: number) => (
     <View key={index} style={{
       marginBottom: 16,
@@ -403,20 +351,6 @@ export default function TestScheduling() {
         >
           <Text style={{ color: 'white', fontWeight: 'bold' }}>
             Limpar
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={runBackfillResidents}
-          disabled={isLoading}
-          style={{
-            backgroundColor: '#10B981',
-            padding: 12,
-            borderRadius: 8,
-            alignItems: 'center'
-          }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>
-            Backfill Residents
           </Text>
         </TouchableOpacity>
       </View>
