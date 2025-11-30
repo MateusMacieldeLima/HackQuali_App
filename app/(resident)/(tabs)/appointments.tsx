@@ -24,13 +24,8 @@ export default function AppointmentsScreen() {
 
       const { data, error } = await supabase
         .from('scheduling')
-        .select(
-          `
-          *,
-          service_requests(requester_id)
-        `
-        )
-        .eq('service_requests.requester_id', user.id)
+        .select(`*, service_requests(requester_id)`)
+        .or(`resident_id.eq.${user.id},service_requests.requester_id.eq.${user.id}`)
         .order('scheduled_start', { ascending: true });
 
       if (error) throw error;
@@ -52,9 +47,13 @@ export default function AppointmentsScreen() {
     fetchAppointments();
   };
 
-  const formatDate = (date: string, time: string) => {
-    const d = new Date(date);
-    return `${d.toLocaleDateString('pt-BR')} às ${time}`;
+  const formatDateOnly = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('pt-BR');
+    } catch (e) {
+      return iso || '';
+    }
   };
 
   const renderAppointmentItem = (appointment: Appointment) => (
@@ -72,17 +71,15 @@ export default function AppointmentsScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
         <FontAwesome name="calendar" size={16} color="#2563EB" />
         <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#111827' }}>
-          {formatDate(appointment.scheduledDate, appointment.scheduledTime)}
+          {formatDateOnly(appointment.scheduled_start || appointment.scheduledStart || appointment.scheduledDate || '')}
         </Text>
       </View>
 
-      <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
-        Duração: {appointment.duration} minutos
-      </Text>
+      {/* duração removida - apenas data é exibida conforme novo esquema */}
 
       {!!appointment.notes && (
         <Text style={{ fontSize: 12, color: '#6B7280' }}>
-          Notas: {appointment.notes}
+          Notas: {String(appointment.notes).replace(/^Nome:\s*.*\n?/, '').trim()}
         </Text>
       )}
 
