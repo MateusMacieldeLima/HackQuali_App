@@ -24,6 +24,52 @@ export default function AddBuildingForm({ onClose, onBuildingAdded }: AddBuildin
     setBuildingData({ ...buildingData, [key]: value });
   };
 
+  // Função para gerar código aleatório de 8 dígitos
+  const generateRandomCode = (): string => {
+    return Math.floor(10000000 + Math.random() * 90000000).toString();
+  };
+
+  // Função para verificar se o código já existe na database
+  const checkCodeExists = async (code: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('buildings')
+        .select('zip_code')
+        .eq('zip_code', code)
+        .limit(1);
+
+      if (error) {
+        console.error('Erro ao verificar código:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (err) {
+      console.error('Erro ao verificar código:', err);
+      return false;
+    }
+  };
+
+  // Função para gerar um código único
+  const generateUniqueCode = async (): Promise<string> => {
+    let code: string;
+    let codeExists: boolean;
+    let attempts = 0;
+    const maxAttempts = 10; // Limite de tentativas para evitar loop infinito
+
+    do {
+      code = generateRandomCode();
+      codeExists = await checkCodeExists(code);
+      attempts++;
+
+      if (attempts >= maxAttempts) {
+        throw new Error('Não foi possível gerar um código único após várias tentativas');
+      }
+    } while (codeExists);
+
+    return code;
+  };
+
   const saveBuilding = async () => {
     if (!buildingData.name || !buildingData.address || !buildingData.city || !buildingData.state) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
@@ -33,13 +79,20 @@ export default function AddBuildingForm({ onClose, onBuildingAdded }: AddBuildin
     setLoading(true);
 
     try {
+      // Gera um código único de 8 dígitos
+      const zipCode = await generateUniqueCode();
+
       const { error } = await supabase
         .from('buildings')
-        .insert([{ ...buildingData, contractor_id: user?.id }]);
+        .insert([{ 
+          ...buildingData, 
+          contractor_id: user?.id,
+          zip_code: zipCode // Adiciona o código gerado único
+        }]);
 
       if (error) throw error;
 
-      Alert.alert('Sucesso', 'Empreendimento criado com sucesso!');
+      Alert.alert('Sucesso', `Empreendimento criado com sucesso!\nCódigo: ${zipCode}`);
       onBuildingAdded(); // Atualiza a lista na tela principal
       onClose(); // Fecha o formulário
     } catch (err) {
@@ -87,7 +140,6 @@ export default function AddBuildingForm({ onClose, onBuildingAdded }: AddBuildin
         value={buildingData.description}
         onChangeText={(value) => handleInputChange('description', value)}
       />
-
 
       <TouchableOpacity
         onPress={saveBuilding}

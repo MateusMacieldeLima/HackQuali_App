@@ -7,7 +7,7 @@ interface AuthContextType {
   userRole: UserRole | null;
   loading: boolean;
   error: string | null;
-  signUp: (email: string, password: string, role: UserRole) => Promise<void>;
+  signUp: (email: string, password: string, role: UserRole, name?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>; // Alias for signIn
   signOut: () => Promise<void>;
@@ -24,20 +24,107 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     checkUser();
+
+    // Configurar listener de mudanças de autenticação
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user?.email);
+      
+      if (event === 'SIGNED_OUT' || !session) {
+        setUser(null);
+        setUserRole(null);
+        setLoading(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          let role = session.user.user_metadata?.role || 'resident';
+          
+          // Buscar role da tabela users se necessário
+          if (!session.user.user_metadata?.role || role === 'resident') {
+            try {
+              const { data: userData } = await supabase
+                .from('users')
+                .select('role, full_name, email')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (userData?.role) {
+                role = userData.role;
+              }
+            } catch (err) {
+              console.log('⚠️ Erro ao buscar role da tabela users no listener:', err);
+            }
+          }
+
+          // Normalizar role (corrigir erro de digitação "tecnician" -> "technician")
+          if (role?.toLowerCase().trim() === 'tecnician') {
+            console.log('🔧 Corrigindo role de "tecnician" para "technician" no listener');
+            role = 'technician';
+          }
+
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || '',
+            role: role as UserRole,
+            createdAt: session.user.created_at || new Date().toISOString(),
+          });
+          setUserRole(role as UserRole);
+        }
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUser = async () => {
     try {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
+        let role = data.session.user.user_metadata?.role || 'resident';
+        console.log('🔍 checkUser - Role do metadata:', role);
+        
+        // Se não há role no metadata ou é o padrão, buscar da tabela users
+        if (!data.session.user.user_metadata?.role || role === 'resident') {
+          console.log('🔍 Buscando role da tabela users...');
+          try {
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('role, full_name, email')
+              .eq('id', data.session.user.id)
+              .single();
+            
+            if (userError) {
+              console.log('⚠️ Erro ao buscar da tabela users:', userError);
+            } else if (userData?.role) {
+              role = userData.role;
+              console.log('✅ Role encontrado na tabela users:', role);
+            } else {
+              console.log('⚠️ Role não encontrado na tabela users');
+            }
+          } catch (err) {
+            console.log('⚠️ Exceção ao buscar role da tabela users:', err);
+          }
+        }
+
+        // Normalizar role (corrigir erro de digitação "tecnician" -> "technician")
+        if (role?.toLowerCase().trim() === 'tecnician') {
+          console.log('🔧 Corrigindo role de "tecnician" para "technician"');
+          role = 'technician';
+        }
+
+        console.log('✅ Role final definido:', role);
         setUser({
           id: data.session.user.id,
           email: data.session.user.email || '',
           name: data.session.user.user_metadata?.name || '',
-          role: data.session.user.user_metadata?.role || 'resident',
+          role: role as UserRole,
           createdAt: data.session.user.created_at || new Date().toISOString(),
         });
-        setUserRole(data.session.user.user_metadata?.role || 'resident');
+        setUserRole(role as UserRole);
       }
     } catch (err) {
       console.error('❌ Erro ao verificar usuário:', err);
@@ -46,19 +133,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, role: UserRole, name?: string) => {
     try {
       setLoading(true);
       setError(null);
       console.log('📝 Criando conta com email:', email, 'role:', role);
       
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             role,
-            name: email.split('@')[0],
+            name: name || email.split('@')[0],
           },
         },
       });
@@ -67,6 +154,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('❌ Erro de signup:', signUpError);
         throw signUpError;
       }
+
+      if (!authData.user) {
+        throw new Error('Usuário não foi criado');
+      }
+
+      // Criar registro na tabela users
+      const { error: userError } = await supabase.from('users').insert([
+        {
+          id: authData.user.id,
+          email: email,
+          full_name: name || email.split('@')[0],
+          role: role,
+        },
+      ]);
+
+      if (userError) {
+        console.error('❌ Erro ao criar registro na tabela users:', userError);
+        // Não lançar erro aqui, pois o usuário já foi criado no auth
+        // O registro na tabela users pode ser criado por um trigger
+      }
+
       console.log('✅ Conta criada com sucesso');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar conta';
@@ -130,14 +238,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('✅ Login bem-sucedido');
       if (data.session?.user) {
+        let role = data.session.user.user_metadata?.role || 'resident';
+        
+        // Se não há role no metadata ou é o padrão, buscar da tabela users
+        // Isso é necessário porque técnicos podem ter role apenas na tabela users
+        if (!data.session.user.user_metadata?.role || role === 'resident') {
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('role, full_name, email')
+              .eq('id', data.session.user.id)
+              .single();
+            
+            if (userData?.role) {
+              role = userData.role;
+              console.log('✅ Role encontrado na tabela users:', role);
+            }
+          } catch (err) {
+            console.log('⚠️ Não foi possível buscar role da tabela users, usando metadata');
+          }
+        }
+
+        // Normalizar role (corrigir erro de digitação "tecnician" -> "technician")
+        if (role?.toLowerCase().trim() === 'tecnician') {
+          console.log('🔧 Corrigindo role de "tecnician" para "technician"');
+          role = 'technician';
+        }
+
         setUser({
           id: data.session.user.id,
           email: data.session.user.email || '',
           name: data.session.user.user_metadata?.name || '',
-          role: data.session.user.user_metadata?.role || 'resident',
+          role: role as UserRole,
           createdAt: data.session.user.created_at || new Date().toISOString(),
         });
-        setUserRole(data.session.user.user_metadata?.role || 'resident');
+        setUserRole(role as UserRole);
+        console.log('✅ User role definido:', role);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao fazer login';
@@ -155,9 +291,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       console.log('🔐 Iniciando logout...');
       
+      // Verificar se há uma sessão ativa antes de tentar fazer logout
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        console.log('⚠️ Nenhuma sessão ativa encontrada, limpando estado local apenas');
+        // Limpar estado local mesmo sem sessão
+        setUser(null);
+        setUserRole(null);
+        console.log('✅ Estado local limpo');
+        return;
+      }
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
+        // Se o erro for "Auth session missing", apenas limpar o estado local
+        if (error.message?.includes('Auth session missing') || error.message?.includes('session')) {
+          console.log('⚠️ Sessão já expirada, limpando estado local apenas');
+          setUser(null);
+          setUserRole(null);
+          console.log('✅ Estado local limpo');
+          return;
+        }
+        
         console.error('❌ Erro no logout:', error);
         throw error;
       }
@@ -167,10 +324,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserRole(null);
       console.log('✅ Logout bem-sucedido');
     } catch (err) {
+      // Se o erro for relacionado a sessão, apenas limpar o estado local
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('Auth session missing') || errorMessage.includes('session')) {
+        console.log('⚠️ Erro de sessão durante logout, limpando estado local apenas');
+        setUser(null);
+        setUserRole(null);
+        return;
+      }
+      
       const message = err instanceof Error ? err.message : 'Erro ao sair';
       console.error('🔴 Erro no logout:', message);
       setError(message);
-      throw err;
+      // Mesmo com erro, limpar o estado local
+      setUser(null);
+      setUserRole(null);
     } finally {
       setLoading(false);
     }

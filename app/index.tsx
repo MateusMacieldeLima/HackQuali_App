@@ -13,13 +13,24 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        console.log('User is authenticated:', user, user.role);
+        console.log('User is authenticated:', user);
+        console.log('User role:', user.role);
+        console.log('User role type:', typeof user.role);
         // Se usuário está autenticado, redirecionar baseado no role
-        if (user.role === 'resident') {
+        // Normalizar role (aceitar variações com erro de digitação)
+        const normalizedRole = user.role?.toLowerCase().trim();
+        
+        if (normalizedRole === 'resident') {
+          console.log('Redirecting to resident home');
           router.replace('/(resident)/(tabs)/home');
-        } else if (user.role === 'contractor') {
-         router.replace('/(contractor)/(tabs)/dashboard');
+        } else if (normalizedRole === 'contractor') {
+          console.log('Redirecting to contractor dashboard');
+          router.replace('/(contractor)/(tabs)/dashboard');
+        } else if (normalizedRole === 'technician' || normalizedRole === 'tecnician') {
+          console.log('Redirecting to technician tickets');
+          router.replace('/(technician)/(tabs)/tickets');
         } else {
+          console.log('Unknown role, redirecting to login. Role:', user.role);
           router.replace('/(auth)/login');
         }
       } else {

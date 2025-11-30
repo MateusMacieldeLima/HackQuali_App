@@ -25,37 +25,65 @@ export default function ResidentHomeScreen() {
 
   const fetchStats = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id) {
+        console.log('⚠️ No user ID available for stats');
+        return;
+      }
 
-      // Fetch open requests
-      const { count: openCount } = await supabase
+      console.log('🔍 Fetching stats for resident:', user.id);
+
+      // Fetch open requests - usar requester_id (snake_case) como em requests.tsx
+      const { count: openCount, error: openError } = await supabase
         .from('service_requests')
         .select('*', { count: 'exact', head: true })
-        .eq('residentId', user.id)
+        .eq('requester_id', user.id)
         .eq('status', 'open');
 
+      if (openError) {
+        console.error('❌ Error fetching open requests:', openError);
+      } else {
+        console.log('✅ Open requests count:', openCount);
+      }
+
       // Fetch completed requests
-      const { count: completedCount } = await supabase
+      const { count: completedCount, error: completedError } = await supabase
         .from('service_requests')
         .select('*', { count: 'exact', head: true })
-        .eq('residentId', user.id)
+        .eq('requester_id', user.id)
         .eq('status', 'completed');
 
-      // Fetch pending ratings
-      const { count: pendingCount } = await supabase
+      if (completedError) {
+        console.error('❌ Error fetching completed requests:', completedError);
+      } else {
+        console.log('✅ Completed requests count:', completedCount);
+      }
+
+      // Fetch pending requests - tickets em aberto (open) e em progresso (in_progress)
+      const { count: pendingCount, error: pendingError } = await supabase
         .from('service_requests')
         .select('*', { count: 'exact', head: true })
-        .eq('residentId', user.id)
-        .eq('status', 'completed')
-        .not('id', 'in', '(select serviceRequestId from service_ratings)');
+        .eq('requester_id', user.id)
+        .in('status', ['open', 'in_progress']);
+
+      if (pendingError) {
+        console.error('❌ Error fetching pending requests:', pendingError);
+      } else {
+        console.log('✅ Pending requests count (open + in_progress):', pendingCount);
+      }
 
       setStats({
         openRequests: openCount || 0,
         completedRequests: completedCount || 0,
         pendingRatings: pendingCount || 0,
       });
+
+      console.log('📊 Final stats:', {
+        openRequests: openCount || 0,
+        completedRequests: completedCount || 0,
+        pendingRatings: pendingCount || 0,
+      });
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      console.error('❌ Error fetching stats:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);

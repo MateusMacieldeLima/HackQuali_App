@@ -3,7 +3,7 @@ import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { Tabs } from 'expo-router';
 import { colors } from '../../../src/styles/authStyles';
 
-export default function ContractorTabLayout() {
+export default function TechnicianTabLayout() {
   const screenOptions: BottomTabNavigationOptions = {
     tabBarActiveTintColor: colors.primary,
     tabBarInactiveTintColor: colors.textSecondary,
@@ -27,35 +27,11 @@ export default function ContractorTabLayout() {
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,
-          headerTitle: 'Dashboard',
-        }}
-      />
-      <Tabs.Screen
         name="tickets"
         options={{
-          title: 'Chamados',
+          title: 'Tickets',
           tabBarIcon: ({ color }) => <FontAwesome name="tasks" size={24} color={color} />,
-          headerTitle: 'Gerenciar Chamados',
-        }}
-      />
-      <Tabs.Screen
-        name="buildings"
-        options={{
-          title: 'Empreendimentos',
-          tabBarIcon: ({ color }) => <FontAwesome name="building" size={24} color={color} />,
-          headerTitle: 'Empreendimentos',
-        }}
-      />
-      <Tabs.Screen
-        name="technicians"
-        options={{
-          title: 'Técnicos',
-          tabBarIcon: ({ color }) => <FontAwesome name="wrench" size={24} color={color} />,
-          headerTitle: 'Gerenciar Técnicos',
+          headerTitle: 'Meus Tickets',
         }}
       />
       <Tabs.Screen
@@ -69,3 +45,4 @@ export default function ContractorTabLayout() {
     </Tabs>
   );
 }
+

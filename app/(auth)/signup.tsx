@@ -1,15 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    ImageBackground,
+  ActivityIndicator,
+  Alert,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { styles } from '../../src/styles/authStyles';
@@ -41,10 +41,19 @@ export default function SignupScreen() {
     }
 
     try {
-      await signUp(email, password, role);
-      // If resident, redirect to link unit page
+      await signUp(email, password, role, name);
+      // Redirect based on role
       if (role === 'resident') {
         router.push('/(auth)/link-unit');
+      } else if (role === 'technician') {
+        // Técnicos são redirecionados para a tela de tickets após login
+        // Mas primeiro precisam fazer login
+        Alert.alert('Sucesso', 'Conta criada com sucesso! Faça login para continuar.');
+        router.push('/(auth)/login');
+      } else if (role === 'contractor') {
+        // Contractors são redirecionados para dashboard após login
+        Alert.alert('Sucesso', 'Conta criada com sucesso! Faça login para continuar.');
+        router.push('/(auth)/login');
       }
     } catch (err) {
       Alert.alert('Erro de Registro', error || 'Falha ao criar conta');
@@ -54,6 +63,7 @@ export default function SignupScreen() {
   const pickerStyles = StyleSheet.create({
     container: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 10,
       marginBottom: 20,
     },
@@ -172,6 +182,23 @@ export default function SignupScreen() {
                 ]}
               >
                 Construtora
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                pickerStyles.option,
+                role === 'technician' && pickerStyles.optionSelected,
+              ]}
+              onPress={() => setRole('technician')}
+              disabled={loading}
+            >
+              <Text
+                style={[
+                  pickerStyles.optionText,
+                  role === 'technician' && pickerStyles.optionTextSelected,
+                ]}
+              >
+                Técnico
               </Text>
             </TouchableOpacity>
           </View>

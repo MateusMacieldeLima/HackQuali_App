@@ -98,6 +98,9 @@ export default function BuildingDetails({ building, onClose, onBuildingDeleted }
       
       <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>{building.description}</Text>
 
+      <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>{building.zip_code}</Text>
+
+
       {/* Tickets Abertos */}
       <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8 }}>
         Tickets Abertos
