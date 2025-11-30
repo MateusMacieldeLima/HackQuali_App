@@ -5,6 +5,7 @@ export const colors = {
   secondary: '#ff9625ff',
   danger: '#FF3333',
   processing: '#f04646ff',
+  assigned: '#6e4af2ff',
   warning: '#f2da04ff',
   success: '#00CC66',
   background: '#F5F7FA',
@@ -155,8 +156,8 @@ export const styles = StyleSheet.create({
 
 export const statusColors: { [key: string]: string } = {
   open: colors.warning,
-  assigned: colors.secondary,
-  in_progress: colors.secondary,
+  assigned: colors.assigned,
+  in_progress: colors.processing,
   completed: colors.success,
   closed: colors.success,
   cancelled: colors.danger,

@@ -6,6 +6,7 @@ import BuildingDetails from '../(buildings)/BuildingDetails';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Building } from '../../../src/types';
 
 
@@ -52,21 +53,39 @@ export default function ContractorBuildingsScreen() {
 
   const renderBuildingItem = (building: Building) => (
     <TouchableOpacity 
-    key={building.id} 
-    style={styles.card}
-    onPress={() => setSelectedBuilding(building)}>
+      key={building.id} 
+      style={styles.card}
+      onPress={() => setSelectedBuilding(building)}
+    >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text }}>
-            {building.name}
-          </Text>
-          <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
-            {building.address}
-          </Text>
-          <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-            {building.city}, {building.state}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <View style={{
+            width: 56,
+            height: 56,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 8,
+            marginRight: 12,
+            backgroundColor: '#E6F4FE',
+            borderWidth: 1,
+            borderColor: colors.primary,
+          }}>
+            <FontAwesome6 name="house" size={28} color={colors.primary} />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text }}>
+              {building.name}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
+              {building.address}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+              {building.city}, {building.state}
+            </Text>
+          </View>
         </View>
+
         <FontAwesome name="chevron-right" size={16} color={colors.textSecondary} />
       </View>
     </TouchableOpacity>
