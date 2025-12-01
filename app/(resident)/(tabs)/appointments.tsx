@@ -21,15 +21,38 @@ export default function AppointmentsScreen() {
   const fetchAppointments = async () => {
     try {
       if (!user?.id) return;
+      // Preferred approach: single query joining service_requests and filtering by requester_id
+      try {
+        const { data, error } = await supabase
+          .from('scheduling')
+          .select('*, service_requests(requester_id)')
+          .eq('service_requests.requester_id', user.id)
+          .order('scheduled_start', { ascending: true });
 
-      const { data, error } = await supabase
-        .from('scheduling')
-        .select(`*, service_requests(requester_id)`)
-        .or(`resident_id.eq.${user.id},service_requests.requester_id.eq.${user.id}`)
-        .order('scheduled_start', { ascending: true });
+        if (error) throw error;
+        setAppointments(data || []);
+        return;
+      } catch (joinErr) {
+        console.warn('[Appointments] join query failed, falling back to service_requests lookup:', joinErr);
+      }
 
-      if (error) throw error;
-      setAppointments(data || []);
+      // Fallback: fetch service_requests for user and extract related scheduling
+      const { data: srs, error: srsError } = await supabase
+        .from('service_requests')
+        .select('id, scheduling(*)')
+        .eq('requester_id', user.id);
+
+      if (srsError) throw srsError;
+
+      const fromSRs: any[] = (srs || []).map((sr: any) => sr.scheduling).flat().filter(Boolean);
+      // Sort by scheduled_start
+      fromSRs.sort((x: any, y: any) => {
+        const a = x?.scheduled_start || x?.scheduledStart || '';
+        const b = y?.scheduled_start || y?.scheduledStart || '';
+        return (a || '').localeCompare(b || '');
+      });
+
+      setAppointments(fromSRs || []);
     } catch (err) {
       console.error('Error fetching appointments:', err);
     } finally {
@@ -68,12 +91,24 @@ export default function AppointmentsScreen() {
         backgroundColor: '#FFFFFF'
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-        <FontAwesome name="calendar" size={16} color="#2563EB" />
-        <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#111827' }}>
-          {formatDateOnly(appointment.scheduled_start || appointment.scheduledStart || appointment.scheduledDate || '')}
-        </Text>
-      </View>
+      {
+        (() => {
+          const ap = appointment as any;
+          const notesStr = String(ap.notes || '');
+          const legacyMatch = notesStr.match(/^Nome:\s*(.+)$/m);
+          const scheduleName = (ap.schedule_name && String(ap.schedule_name).trim()) || (legacyMatch ? legacyMatch[1].trim() : null) || ap.service_requests?.title || 'Intervenção agendada';
+
+          return (
+            <View style={{ marginBottom: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>{scheduleName}</Text>
+                <FontAwesome name="calendar" size={16} color="#2563EB" />
+              </View>
+              <Text style={{ marginTop: 6, color: '#6B7280' }}>{formatDateOnly(ap.scheduled_start || ap.scheduledStart || ap.scheduledDate || '')}</Text>
+            </View>
+          );
+        })()
+      }
 
       {/* duração removida - apenas data é exibida conforme novo esquema */}
 
