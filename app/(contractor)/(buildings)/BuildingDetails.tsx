@@ -26,6 +26,7 @@ export default function BuildingDetails({ building, onClose, onBuildingDeleted }
   const [units, setUnits] = useState<UnitWithTickets[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
   const [showAddUnit, setShowAddUnit] = useState(false);
   const [addingUnit, setAddingUnit] = useState(false);
   const [unitForm, setUnitForm] = useState({
@@ -321,6 +322,58 @@ export default function BuildingDetails({ building, onClose, onBuildingDeleted }
     }
   };
 
+  // Função para deletar unidade
+  const deleteUnit = async (unitId: string) => {
+    try {
+      console.log('🔄 [DELETE_UNIT] Iniciando exclusão da unidade:', unitId);
+      setDeletingUnitId(unitId);
+      
+      // Verificar se a unidade tem tickets associados
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('service_requests')
+        .select('id')
+        .eq('unit_id', unitId)
+        .limit(1);
+
+      if (ticketsError) {
+        console.error('❌ [DELETE_UNIT] Erro ao verificar tickets:', ticketsError);
+        throw ticketsError;
+      }
+
+      if (tickets && tickets.length > 0) {
+        console.log('⚠️ [DELETE_UNIT] Unidade possui tickets associados');
+        Alert.alert(
+          'Erro',
+          'Não é possível excluir esta unidade pois ela possui tickets associados.'
+        );
+        setDeletingUnitId(null);
+        return;
+      }
+
+      console.log('✅ [DELETE_UNIT] Nenhum ticket encontrado, prosseguindo com exclusão');
+
+      // Deletar a unidade
+      const { error } = await supabase
+        .from('units')
+        .delete()
+        .eq('id', unitId);
+
+      if (error) {
+        console.error('❌ [DELETE_UNIT] Erro ao deletar unidade:', error);
+        throw error;
+      }
+
+      console.log('✅ [DELETE_UNIT] Unidade excluída com sucesso');
+      Alert.alert('Sucesso', 'Unidade excluída com sucesso!');
+      fetchDetails(); // Recarregar lista de unidades
+    } catch (err) {
+      console.error('❌ [DELETE_UNIT] Erro ao excluir unidade:', err);
+      Alert.alert('Erro', 'Não foi possível excluir a unidade.');
+    } finally {
+      setDeletingUnitId(null);
+    }
+  };
+
   // Função para deletar a construção
   const deleteBuilding = async () => {
     try {
@@ -399,11 +452,38 @@ export default function BuildingDetails({ building, onClose, onBuildingDeleted }
           <View key={unit.id} style={[styles.card, { marginBottom: 16 }]}>
             {/* Informações da Unidade */}
             <View style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <FontAwesome name="home" size={20} color={colors.primary} />
-                <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginLeft: 8 }}>
-                  Unidade {unit.unit_number}
-                </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <FontAwesome name="home" size={20} color={colors.primary} />
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginLeft: 8 }}>
+                    Unidade {unit.unit_number}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    console.log('👆 [DELETE_BUTTON] TouchableOpacity pressionado para unidade:', unit.id);
+                    deleteUnit(unit.id);
+                  }}
+                  disabled={deletingUnitId === unit.id}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{
+                    padding: 8,
+                    borderRadius: 6,
+                    backgroundColor: deletingUnitId === unit.id ? colors.textSecondary + '30' : '#ff4444' + '20',
+                    marginLeft: 8,
+                    minWidth: 32,
+                    minHeight: 32,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  {deletingUnitId === unit.id ? (
+                    <ActivityIndicator size="small" color="#ff4444" />
+                  ) : (
+                    <FontAwesome name="trash" size={16} color="#ff4444" />
+                  )}
+                </TouchableOpacity>
               </View>
               
               {unit.unit_code && (

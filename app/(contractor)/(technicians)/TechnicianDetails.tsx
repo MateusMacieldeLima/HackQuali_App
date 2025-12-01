@@ -1,12 +1,11 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { colors, statusColors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
@@ -97,14 +96,13 @@ export default function TechnicianDetails({
         .in('id', completedUnitIds);
 
       // Criar mapas para lookup rápido
-      const buildingMap = new Map([
-        ...(activeBuildings || []).map((b: any) => [b.id, b.name]),
-        ...(completedBuildings || []).map((b: any) => [b.id, b.name]),
-      ]);
-      const unitMap = new Map([
-        ...(activeUnits || []).map((u: any) => [u.id, u.unit_number]),
-        ...(completedUnits || []).map((u: any) => [u.id, u.unit_number]),
-      ]);
+      const buildingMap = new Map<string, string>();
+      (activeBuildings || []).forEach((b: any) => buildingMap.set(b.id, b.name));
+      (completedBuildings || []).forEach((b: any) => buildingMap.set(b.id, b.name));
+      
+      const unitMap = new Map<string, string>();
+      (activeUnits || []).forEach((u: any) => unitMap.set(u.id, u.unit_number));
+      (completedUnits || []).forEach((u: any) => unitMap.set(u.id, u.unit_number));
 
       // Mapear tarefas ativas
       const mappedActiveTasks: ServiceRequestWithDetails[] = (activeData || []).map((task: any) => ({
@@ -116,8 +114,8 @@ export default function TechnicianDetails({
         category: task.category,
         created_at: task.created_at,
         completed_at: task.completed_at,
-        building_name: buildingMap.get(task.building_id) || 'N/A',
-        unit_number: unitMap.get(task.unit_id) || 'N/A',
+        building_name: (buildingMap.get(task.building_id) as string) || 'N/A',
+        unit_number: (unitMap.get(task.unit_id) as string) || 'N/A',
       }));
 
       // Mapear tarefas concluídas
@@ -130,8 +128,8 @@ export default function TechnicianDetails({
         category: task.category,
         created_at: task.created_at,
         completed_at: task.completed_at,
-        building_name: buildingMap.get(task.building_id) || 'N/A',
-        unit_number: unitMap.get(task.unit_id) || 'N/A',
+        building_name: (buildingMap.get(task.building_id) as string) || 'N/A',
+        unit_number: (unitMap.get(task.unit_id) as string) || 'N/A',
       }));
 
       setActiveTasks(mappedActiveTasks);
@@ -315,13 +313,13 @@ export default function TechnicianDetails({
           Tarefas Ativas
         </Text>
         {activeTasks.length > 0 ? (
-          <FlatList
-            data={activeTasks}
-            renderItem={renderTaskItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            ListFooterComponent={<View style={{ height: 16 }} />}
-          />
+          <>
+            {activeTasks.map((item) => (
+              <View key={item.id} style={{ marginBottom: 12 }}>
+                {renderTaskItem({ item })}
+              </View>
+            ))}
+          </>
         ) : (
           <View style={[styles.card, { padding: 24, alignItems: 'center' }]}>
             <FontAwesome name="check-circle" size={32} color={colors.textSecondary} />
@@ -344,13 +342,13 @@ export default function TechnicianDetails({
           Tarefas Concluídas
         </Text>
         {completedTasks.length > 0 ? (
-          <FlatList
-            data={completedTasks}
-            renderItem={renderTaskItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            ListFooterComponent={<View style={{ height: 16 }} />}
-          />
+          <>
+            {completedTasks.map((item) => (
+              <View key={item.id} style={{ marginBottom: 12 }}>
+                {renderTaskItem({ item })}
+              </View>
+            ))}
+          </>
         ) : (
           <View style={[styles.card, { padding: 24, alignItems: 'center' }]}>
             <FontAwesome name="history" size={32} color={colors.textSecondary} />

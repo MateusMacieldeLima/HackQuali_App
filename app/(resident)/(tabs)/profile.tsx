@@ -60,12 +60,21 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-      router.replace('/(auth)/login');
-    } catch (err) {
-      Alert.alert('Erro', 'Falha ao desconectar');
-    }      
+    Alert.alert('Desconectar', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
+      {
+        text: 'Desconectar',
+        onPress: async () => {
+          try {
+            await signOut();
+            router.replace('/(auth)/login');
+          } catch (err) {
+            Alert.alert('Erro', 'Falha ao desconectar');
+          }
+        },
+        style: 'destructive',
+      },
+    ]);
   };
 
   return (
@@ -146,54 +155,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
-
-      {/* Actions */}
-      <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="lock" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Alterar Senha
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="bell" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Notificações
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="question-circle" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Ajuda e Suporte
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
-      </View>
 
       {/* Logout Button */}
       <View style={{ paddingHorizontal: 16, marginBottom: 40 }}>

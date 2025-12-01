@@ -1,10 +1,11 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
+import ScheduleDetails from '../scheduling/ScheduleDetails';
 
 export default function TechnicianSchedulingList() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function TechnicianSchedulingList() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
 
   const fetchSchedules = async () => {
     try {
@@ -37,17 +39,6 @@ export default function TechnicianSchedulingList() {
     }
   };
 
-  const deleteSchedule = async (id: string) => {
-    try {
-      const { error } = await supabase.from('scheduling').delete().eq('id', id);
-      if (error) throw error;
-      Alert.alert('Sucesso', 'Agendamento removido.');
-      fetchSchedules();
-    } catch (err) {
-      console.error('[TechnicianSchedulingList] Error deleting schedule:', err);
-      Alert.alert('Erro', 'Não foi possível excluir o agendamento.');
-    }
-  };
 
   useEffect(() => {
     fetchSchedules();
@@ -58,49 +49,36 @@ export default function TechnicianSchedulingList() {
     fetchSchedules();
   };
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View key={item.id} style={[styles.card, { marginBottom: 12 }]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        {
-          (() => {
-            // Prefer schedule name if present. We store schedule name in notes prefixed with "Nome: ...\n" when creating.
-            const notesStr = String(item.notes || '');
-            // Prefer explicit schedule_name column when available
-            const scheduleName = (item.schedule_name && String(item.schedule_name).trim()) || null;
-            // If schedule_name not available, try to extract legacy 'Nome: ...' from notes
-            const legacyMatch = !scheduleName ? notesStr.match(/^Nome:\s*(.+)$/m) : null;
-            const finalName = scheduleName || (legacyMatch ? legacyMatch[1].trim() : null);
-            const title = finalName || item.service_requests?.title || 'Intervenção agendada';
-            return <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{title}</Text>;
-          })()
-        }
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <FontAwesome name="calendar" size={18} color={colors.primary} />
-          <TouchableOpacity
-            onPress={() => router.push(`/(technician)/scheduling/${item.id}/edit`)}
-            style={{ padding: 6 }}
-          >
-            <FontAwesome name="pencil" size={16} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              Alert.alert('Confirmar', 'Deseja excluir este agendamento?', [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Excluir', style: 'destructive', onPress: () => deleteSchedule(item.id) },
-              ]);
-            }}
-            style={{ padding: 6 }}
-          >
-            <FontAwesome name="trash" size={16} color="#c62828" />
-          </TouchableOpacity>
+  const renderItem = ({ item }: { item: any }) => {
+    const notesStr = String(item.notes || '');
+    const scheduleName = (item.schedule_name && String(item.schedule_name).trim()) || null;
+    const legacyMatch = !scheduleName ? notesStr.match(/^Nome:\s*(.+)$/m) : null;
+    const finalName = scheduleName || (legacyMatch ? legacyMatch[1].trim() : null);
+    const title = finalName || item.service_requests?.title || 'Intervenção agendada';
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={[styles.card, { marginBottom: 12 }]}
+        onPress={() => setSelectedSchedule(item)}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{title}</Text>
+            <Text style={{ marginTop: 6, color: colors.textSecondary }}>
+              {item.scheduled_start ? new Date(item.scheduled_start).toLocaleDateString('pt-BR') : '—'}
+            </Text>
+            {!!item.notes && (
+              <Text style={{ marginTop: 8, color: colors.textSecondary }}>
+                Notas: {String(item.notes).replace(/^Nome:\s*.*\n?/, '').trim()}
+              </Text>
+            )}
+          </View>
+          <FontAwesome name="chevron-right" size={16} color={colors.textSecondary} />
         </View>
-      </View>
-      <Text style={{ marginTop: 6, color: colors.textSecondary }}>
-        {item.scheduled_start ? new Date(item.scheduled_start).toLocaleDateString('pt-BR') : '—'}
-      </Text>
-      {!!item.notes && <Text style={{ marginTop: 8, color: colors.textSecondary }}>Notas: {String(item.notes).replace(/^Nome:\s*.*\n?/, '').trim()}</Text>}
-    </View>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -112,29 +90,42 @@ export default function TechnicianSchedulingList() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => {
-          console.log('[TechnicianSchedulingList] New button pressed');
-          router.push('/(technician)/scheduling/new');
-        }}
-        style={[styles.button, { margin: 16 }]}
-      >
-        <Text style={{ color: colors.white, fontWeight: '700' }}>Novo Agendamento</Text>
-      </TouchableOpacity>
-
-      {schedules.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <FontAwesome name="calendar-o" size={56} color={colors.textSecondary} />
-          <Text style={{ marginTop: 16, color: colors.text }}>Nenhum agendamento encontrado.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={schedules}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderItem}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          contentContainerStyle={{ padding: 16 }}
+      {selectedSchedule ? (
+        <ScheduleDetails
+          schedule={selectedSchedule}
+          onClose={() => setSelectedSchedule(null)}
+          onScheduleDeleted={() => {
+            fetchSchedules();
+            setSelectedSchedule(null);
+          }}
         />
+      ) : (
+        <>
+          <TouchableOpacity
+            onPress={() => {
+              console.log('[TechnicianSchedulingList] New button pressed');
+              router.push('/(technician)/scheduling/new');
+            }}
+            style={[styles.button, { margin: 16 }]}
+          >
+            <Text style={{ color: colors.white, fontWeight: '700' }}>Novo Agendamento</Text>
+          </TouchableOpacity>
+
+          {schedules.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <FontAwesome name="calendar-o" size={56} color={colors.textSecondary} />
+              <Text style={{ marginTop: 16, color: colors.text }}>Nenhum agendamento encontrado.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={schedules}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={renderItem}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              contentContainerStyle={{ padding: 16 }}
+            />
+          )}
+        </>
       )}
     </View>
   );

@@ -5,18 +5,21 @@ import {
   FlatList,
   RefreshControl,
   Text,
+  TouchableOpacity,
   View
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
+import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 import { Appointment } from '../../../src/types';
-import { colors, styles } from '../../../src/styles/authStyles';
+import AppointmentDetails from '../appointments/AppointmentDetails';
 
 export default function AppointmentsScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const fetchAppointments = async () => {
     try {
@@ -79,58 +82,46 @@ export default function AppointmentsScreen() {
     }
   };
 
-  const renderAppointmentItem = (appointment: Appointment) => (
-    <View
-      key={appointment.id}
-      style={{
-        padding: 12,
-        marginBottom: 12,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E5E7EB', // cinza claro
-        backgroundColor: '#FFFFFF'
-      }}
-    >
-      {
-        (() => {
-          const ap = appointment as any;
-          const notesStr = String(ap.notes || '');
-          const legacyMatch = notesStr.match(/^Nome:\s*(.+)$/m);
-          const scheduleName = (ap.schedule_name && String(ap.schedule_name).trim()) || (legacyMatch ? legacyMatch[1].trim() : null) || ap.service_requests?.title || 'Intervenção agendada';
+  const renderAppointmentItem = ({ item }: { item: Appointment }) => {
+    const ap = item as any;
+    const notesStr = String(ap.notes || '');
+    const legacyMatch = notesStr.match(/^Nome:\s*(.+)$/m);
+    const scheduleName = (ap.schedule_name && String(ap.schedule_name).trim()) || (legacyMatch ? legacyMatch[1].trim() : null) || ap.service_requests?.title || 'Intervenção agendada';
 
-          return (
-            <View style={{ marginBottom: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>{scheduleName}</Text>
-                <FontAwesome name="calendar" size={16} color="#2563EB" />
-              </View>
-              <Text style={{ marginTop: 6, color: '#6B7280' }}>{formatDateOnly(ap.scheduled_start || ap.scheduledStart || ap.scheduledDate || '')}</Text>
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={[styles.card, { marginBottom: 12 }]}
+        onPress={() => setSelectedAppointment(item)}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{scheduleName}</Text>
+            <Text style={{ marginTop: 6, color: colors.textSecondary }}>
+              {formatDateOnly(ap.scheduled_start || ap.scheduledStart || ap.scheduledDate || '')}
+            </Text>
+            {!!ap.notes && (
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+                Notas: {String(ap.notes).replace(/^Nome:\s*.*\n?/, '').trim()}
+              </Text>
+            )}
+            <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  color: ap.status === 'confirmed' ? colors.success : colors.textSecondary
+                }}
+              >
+                Status: {ap.status === 'confirmed' ? 'Confirmado' : 'Agendado'}
+              </Text>
             </View>
-          );
-        })()
-      }
-
-      {/* duração removida - apenas data é exibida conforme novo esquema */}
-
-      {!!appointment.notes && (
-        <Text style={{ fontSize: 12, color: '#6B7280' }}>
-          Notas: {String(appointment.notes).replace(/^Nome:\s*.*\n?/, '').trim()}
-        </Text>
-      )}
-
-      <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: '600',
-            color: appointment.status === 'confirmed' ? '#16A34A' : '#6B7280'
-          }}
-        >
-          Status: {appointment.status === 'confirmed' ? 'Confirmado' : 'Agendado'}
-        </Text>
-      </View>
-    </View>
-  );
+          </View>
+          <FontAwesome name="chevron-right" size={16} color={colors.textSecondary} style={{ marginLeft: 12 }} />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -142,24 +133,33 @@ export default function AppointmentsScreen() {
 
   return (
     <View style={styles.container}>
-      {appointments.length > 0 ? (
-        <FlatList
-          data={appointments}
-          renderItem={({ item }) => renderAppointmentItem(item)}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      {selectedAppointment ? (
+        <AppointmentDetails
+          appointment={selectedAppointment as any}
+          onClose={() => setSelectedAppointment(null)}
         />
       ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
-          <FontAwesome name="calendar-o" size={48} color="#6B7280" />
-          <Text style={{ marginTop: 16, fontSize: 16, fontWeight: '600', color: '#111827' }}>
-            Nenhum agendamento
-          </Text>
-          <Text style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>
-            Seus agendamentos aparecerão aqui
-          </Text>
-        </View>
+        <>
+          {appointments.length > 0 ? (
+            <FlatList
+              data={appointments}
+              renderItem={renderAppointmentItem}
+              keyExtractor={(item) => String(item.id)}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            />
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
+              <FontAwesome name="calendar-o" size={48} color={colors.textSecondary} />
+              <Text style={{ marginTop: 16, fontSize: 16, fontWeight: '600', color: colors.text }}>
+                Nenhum agendamento
+              </Text>
+              <Text style={{ marginTop: 8, fontSize: 12, color: colors.textSecondary }}>
+                Seus agendamentos aparecerão aqui
+              </Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );

@@ -40,12 +40,15 @@ interface TicketDetails {
   assigned_to?: string;
   technician_name?: string;
   technician_email?: string;
+  rating?: number | null;
 }
 
 export default function RequestDetailsResident({ request, onClose }: RequestDetailsProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [ticketDetails, setTicketDetails] = useState<TicketDetails | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [savingRating, setSavingRating] = useState(false);
 
   const fetchTicketDetails = async () => {
     try {
@@ -125,7 +128,9 @@ export default function RequestDetailsResident({ request, onClose }: RequestDeta
         assigned_to: ticketData.assigned_to,
         technician_name: technicianName,
         technician_email: technicianEmail,
+        rating: ticketData.rating,
       });
+      setSelectedRating(ticketData.rating);
     } catch (err) {
       console.error('❌ Error fetching ticket details:', err);
       Alert.alert('Erro', 'Não foi possível carregar os detalhes do ticket');
@@ -172,6 +177,33 @@ export default function RequestDetailsResident({ request, onClose }: RequestDeta
       other: 'Outro',
     };
     return labels[category] || category;
+  };
+
+  const saveRating = async (rating: number) => {
+    if (!ticketDetails) return;
+    
+    try {
+      setSavingRating(true);
+      
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ 
+          rating: rating,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ticketDetails.id);
+
+      if (error) throw error;
+
+      setSelectedRating(rating);
+      setTicketDetails(prev => prev ? { ...prev, rating } : null);
+      Alert.alert('Sucesso', 'Avaliação registrada com sucesso!');
+    } catch (err) {
+      console.error('Erro ao salvar avaliação:', err);
+      Alert.alert('Erro', 'Não foi possível salvar a avaliação');
+    } finally {
+      setSavingRating(false);
+    }
   };
 
   if (loading) {
@@ -346,6 +378,75 @@ export default function RequestDetailsResident({ request, onClose }: RequestDeta
               {ticketDetails.technician_email}
             </Text>
           )}
+        </View>
+      )}
+
+      {/* Avaliação do Ticket (somente para concluídos e para residente) */}
+      {ticketDetails.status === 'completed' && (
+        <View
+          style={{
+            backgroundColor: colors.warning + '15',
+            padding: 16,
+            borderRadius: 8,
+            marginBottom: 16,
+            borderLeftWidth: 4,
+            borderLeftColor: colors.warning,
+          }}
+        >
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 }}>
+            ⭐ Avaliar Serviço
+          </Text>
+          
+          {ticketDetails.rating ? (
+            <View style={{ alignItems: 'center', marginBottom: 8 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FontAwesome
+                    key={star}
+                    name={star <= ticketDetails.rating! ? 'star' : 'star-o'}
+                    size={24}
+                    color={star <= ticketDetails.rating! ? colors.warning : colors.textSecondary}
+                  />
+                ))}
+              </View>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 8 }}>
+                Você avaliou: {ticketDetails.rating} {ticketDetails.rating === 1 ? 'estrela' : 'estrelas'}
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, textAlign: 'center', marginBottom: 12 }}>
+                Gostaria de mudar sua avaliação?
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 12 }}>
+              Por favor, avalie este serviço para nos ajudar a melhorar!
+            </Text>
+          )}
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => saveRating(star)}
+                disabled={savingRating}
+                style={{
+                  padding: 8,
+                  borderRadius: 8,
+                  backgroundColor: selectedRating === star ? colors.warning + '30' : 'transparent',
+                  opacity: savingRating ? 0.5 : 1,
+                }}
+              >
+                {savingRating && selectedRating === star ? (
+                  <ActivityIndicator size="small" color={colors.warning} />
+                ) : (
+                  <FontAwesome
+                    name="star"
+                    size={32}
+                    color={star <= (selectedRating || 0) ? colors.warning : colors.textSecondary}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
     </ScrollView>

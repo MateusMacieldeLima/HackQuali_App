@@ -2,11 +2,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
@@ -70,54 +70,6 @@ export default function ContractorProfileScreen() {
             </View>
           )}
         </View>
-      </View>
-
-      {/* Actions */}
-      <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="lock" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Alterar Senha
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="cog" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Configurações da Empresa
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}
-        >
-          <FontAwesome name="question-circle" size={20} color={colors.primary} />
-          <Text style={{ marginLeft: 12, fontSize: 14, fontWeight: '600', color: colors.text }}>
-            Ajuda e Suporte
-          </Text>
-          <FontAwesome
-            name="chevron-right"
-            size={16}
-            color={colors.textSecondary}
-            style={{ marginLeft: 'auto' }}
-          />
-        </TouchableOpacity>
       </View>
 
       {/* Logout Button */}
