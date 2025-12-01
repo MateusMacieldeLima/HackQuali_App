@@ -264,33 +264,45 @@ export default function TicketDetailsTechnician({ ticket, onClose, onStatusChang
           {ticketDetails.status === 'assigned' && (
             <TouchableOpacity
               onPress={() => changeStatus('in_progress')}
+              disabled={updating}
               style={{
                 backgroundColor: colors.primary,
                 padding: 14,
                 borderRadius: 8,
                 alignItems: 'center',
                 marginBottom: 12,
+                opacity: updating ? 0.6 : 1,
               }}
             >
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
-                Iniciar Trabalho
-              </Text>
+              {updating ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
+                  Iniciar Trabalho
+                </Text>
+              )}
             </TouchableOpacity>
           )}
 
           {ticketDetails.status === 'in_progress' && (
             <TouchableOpacity
               onPress={() => changeStatus('completed')}
+              disabled={updating}
               style={{
                 backgroundColor: colors.success,
                 padding: 14,
                 borderRadius: 8,
                 alignItems: 'center',
+                opacity: updating ? 0.6 : 1,
               }}
             >
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
-                Marcar como Concluído
-              </Text>
+              {updating ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
+                  Marcar como Concluído
+                </Text>
+              )}
             </TouchableOpacity>
           )}
         </View>

@@ -1,13 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { styles } from '../../src/styles/authStyles';
@@ -31,8 +31,8 @@ export default function LinkUnitScreen() {
       // Fetch unit by code
       const { data: unit, error: unitError } = await supabase
         .from('units')
-        .select('id, buildingId')
-        .eq('code', unitCode.toUpperCase())
+        .select('id, building_id, resident_id')
+        .eq('unit_code', unitCode.toUpperCase())
         .single();
 
       if (unitError || !unit) {
@@ -40,14 +40,19 @@ export default function LinkUnitScreen() {
         return;
       }
 
-      // Update user with unit information
+      // Verificar se a unidade já está vinculada a outro residente
+      if (unit.resident_id && unit.resident_id !== user?.id) {
+        Alert.alert('Erro', 'Esta unidade já está vinculada a outro morador.');
+        return;
+      }
+
+      // Atualizar a unidade com o ID do residente
       const { error: updateError } = await supabase
-        .from('users')
+        .from('units')
         .update({
-          unitId: unit.id,
-          buildingId: unit.buildingId,
+          resident_id: user?.id,
         })
-        .eq('id', user?.id);
+        .eq('id', unit.id);
 
       if (updateError) throw updateError;
 

@@ -137,15 +137,11 @@ export default function NewRequestScreen({ onClose, onRequestCreated }: NewReque
 
       console.log('✅ Request created successfully:', data);
 
-      Alert.alert('Sucesso', 'Solicitação criada com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            console.log('🔄 Closing form and refreshing list...');
-            onRequestCreated?.();
-          },
-        },
-      ]);
+      // Fechar o componente e atualizar a lista
+      onRequestCreated?.();
+      onClose();
+      
+      Alert.alert('Sucesso', 'Solicitação criada com sucesso!');
     } catch (err) {
       console.error('❌ Error creating request:', err);
       Alert.alert('Erro', `Não foi possível criar a solicitação: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
@@ -184,6 +180,20 @@ export default function NewRequestScreen({ onClose, onRequestCreated }: NewReque
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+      {/* Header with Close Button */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>Nova Solicitação</Text>
+        <TouchableOpacity
+          onPress={onClose}
+          style={{
+            padding: 8,
+            borderRadius: 8,
+            backgroundColor: colors.background,
+          }}
+        >
+          <FontAwesome name="times" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
       {/* Title */}
       <View style={{ marginBottom: 16 }}>

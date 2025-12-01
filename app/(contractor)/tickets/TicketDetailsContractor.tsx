@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
 import { ServiceRequest } from '../../../src/types';
@@ -23,16 +24,72 @@ interface TicketWithDetails {
   unit_number: string;
   unit_floor: string;
   unit_type: string;
+  assigned_to?: string;
+  technician_name?: string;
+  technician_email?: string;
+}
+
+interface Technician {
+  id: string;
+  full_name: string;
+  email: string;
 }
 
 export default function TicketDetails({ ticket, onClose, onStatusChange }: TicketDetailsProps) {
+  const { user } = useAuth();
   const [updating, setUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ticketDetails, setTicketDetails] = useState<TicketWithDetails | null>(null);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [loadingTechnicians, setLoadingTechnicians] = useState(false);
+  const [showTechnicianSelector, setShowTechnicianSelector] = useState(false);
 
   useEffect(() => {
     fetchTicketDetails();
+    fetchTechnicians();
   }, [ticket.id]);
+
+  const fetchTechnicians = async () => {
+    try {
+      if (!user?.id) return;
+
+      setLoadingTechnicians(true);
+
+      // Buscar técnicos vinculados ao contractor através da tabela company_technicians
+      const { data: links, error: linksError } = await supabase
+        .from('company_technicians')
+        .select('technician_id')
+        .eq('company_id', user.id);
+
+      if (linksError) throw linksError;
+
+      if (!links || links.length === 0) {
+        setTechnicians([]);
+        return;
+      }
+
+      // Buscar os dados dos técnicos
+      const technicianIds = links.map((link: any) => link.technician_id);
+      const { data: techniciansData, error: techError } = await supabase
+        .from('users')
+        .select('id, email, full_name')
+        .in('id', technicianIds)
+        .eq('role', 'technician');
+
+      if (techError) throw techError;
+
+      setTechnicians((techniciansData || []).map((tech: any) => ({
+        id: tech.id,
+        full_name: tech.full_name || '',
+        email: tech.email || '',
+      })));
+    } catch (err) {
+      console.error('Erro ao buscar técnicos:', err);
+      setTechnicians([]);
+    } finally {
+      setLoadingTechnicians(false);
+    }
+  };
 
   const fetchTicketDetails = async () => {
     try {
@@ -74,6 +131,22 @@ export default function TicketDetails({ ticket, onClose, onStatusChange }: Ticke
 
       if (userError) throw userError;
 
+      // Buscar dados do técnico se houver
+      let technicianName = undefined;
+      let technicianEmail = undefined;
+      if (ticketData.assigned_to) {
+        const { data: technicianData } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', ticketData.assigned_to)
+          .single();
+
+        if (technicianData) {
+          technicianName = technicianData.full_name;
+          technicianEmail = technicianData.email;
+        }
+      }
+
       setTicketDetails({
         id: ticketData.id,
         title: ticketData.title,
@@ -86,6 +159,9 @@ export default function TicketDetails({ ticket, onClose, onStatusChange }: Ticke
         unit_number: unitData.unit_number,
         unit_floor: unitData.floor,
         unit_type: unitData.type,
+        assigned_to: ticketData.assigned_to,
+        technician_name: technicianName,
+        technician_email: technicianEmail,
       });
 
     } catch (err) {
@@ -95,25 +171,57 @@ export default function TicketDetails({ ticket, onClose, onStatusChange }: Ticke
     }
   };
 
-  const changeStatus = async (newStatus: string) => {
+  const assignTechnician = async (technicianId: string) => {
     try {
       setUpdating(true);
 
       const { error } = await supabase
         .from('service_requests')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update({ 
+          assigned_to: technicianId,
+          status: 'assigned',
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', ticket.id);
 
       if (error) throw error;
 
-      onStatusChange(); // Atualiza a lista ao alterar o status
-      onClose(); // Fecha os detalhes após a alteração
+      Alert.alert('Sucesso', 'Técnico atribuído com sucesso!');
+      onStatusChange(); // Atualiza a lista
+      fetchTicketDetails(); // Atualiza os detalhes
+      setShowTechnicianSelector(false);
     } catch (err) {
-      console.error('Erro ao alterar status:', err);
+      console.error('Erro ao atribuir técnico:', err);
+      Alert.alert('Erro', 'Não foi possível atribuir o técnico.');
     } finally {
       setUpdating(false);
     }
   };
+
+  const cancelTicket = async () => {
+    try {
+      setUpdating(true);
+
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', ticket.id);
+
+      if (error) throw error;
+
+      Alert.alert('Sucesso', 'Ticket cancelado com sucesso!');
+      onStatusChange(); // Atualiza a lista
+      onClose(); // Fecha os detalhes
+    } catch (err) {
+      console.error('Erro ao cancelar ticket:', err);
+      Alert.alert('Erro', 'Não foi possível cancelar o ticket.');
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   if (loading || updating) {
     return (
@@ -250,31 +358,124 @@ export default function TicketDetails({ ticket, onClose, onStatusChange }: Ticke
         </View>
       </View>
 
-      {/* Alteração de Status */}
-      <Text style={{ fontWeight: '700', marginBottom: 12, color: colors.text, fontSize: 16 }}>
-        Alterar Status
-      </Text>
-      {['open', 'assigned', 'in_progress', 'completed', 'cancelled'].map((status) => (
-        <TouchableOpacity
-          key={status}
-          onPress={() => changeStatus(status)}
-          style={{
-            padding: 12,
-            borderRadius: 8,
-            backgroundColor: ticketDetails.status === status ? colors.primary : colors.background,
-            marginBottom: 8,
-            borderWidth: 1,
-            borderColor: ticketDetails.status === status ? colors.primary : '#E0E0E0',
-          }}
-        >
-          <Text style={{ 
-            color: ticketDetails.status === status ? 'white' : colors.text,
-            fontWeight: ticketDetails.status === status ? '600' : '400'
-          }}>
-            {getStatusLabel(status)}
+      {/* Técnico Atribuído */}
+      {ticketDetails.technician_name && (
+        <View style={{ 
+          backgroundColor: colors.background, 
+          padding: 16, 
+          borderRadius: 8, 
+          marginBottom: 16,
+          borderLeftWidth: 4,
+          borderLeftColor: '#4CAF50' 
+        }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+            🔧 Técnico Responsável
           </Text>
-        </TouchableOpacity>
-      ))}
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
+            {ticketDetails.technician_name}
+          </Text>
+          {ticketDetails.technician_email && (
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>
+              {ticketDetails.technician_email}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Atribuir Técnico - Apenas se não houver técnico atribuído e status for "open" */}
+      {!ticketDetails.assigned_to && ticketDetails.status === 'open' && (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontWeight: '700', marginBottom: 12, color: colors.text, fontSize: 16 }}>
+            Atribuir Técnico
+          </Text>
+          
+          {!showTechnicianSelector ? (
+            <TouchableOpacity
+              onPress={() => setShowTechnicianSelector(true)}
+              style={{
+                backgroundColor: colors.primary,
+                padding: 12,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '600' }}>
+                Selecionar Técnico
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <View>
+              {loadingTechnicians ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : technicians.length === 0 ? (
+                <Text style={{ color: colors.textSecondary, textAlign: 'center', padding: 16 }}>
+                  Nenhum técnico disponível. Adicione técnicos na seção de Técnicos.
+                </Text>
+              ) : (
+                <>
+                  {technicians.map((technician) => (
+                    <TouchableOpacity
+                      key={technician.id}
+                      onPress={() => assignTechnician(technician.id)}
+                      style={{
+                        padding: 12,
+                        borderRadius: 8,
+                        backgroundColor: colors.background,
+                        marginBottom: 8,
+                        borderWidth: 1,
+                        borderColor: '#E0E0E0',
+                      }}
+                    >
+                      <Text style={{ fontWeight: '600', color: colors.text }}>
+                        {technician.full_name}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                        {technician.email}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    onPress={() => setShowTechnicianSelector(false)}
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      marginTop: 8,
+                    }}
+                  >
+                    <Text style={{ color: colors.textSecondary }}>Cancelar</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Cancelar Ticket - Disponível a qualquer momento, exceto se já estiver cancelado */}
+      {ticketDetails.status !== 'cancelled' && (
+        <View style={{ marginTop: 16, marginBottom: 32 }}>
+          <TouchableOpacity
+            onPress={cancelTicket}
+            disabled={updating}
+            style={{
+              backgroundColor: '#F44336',
+              padding: 14,
+              borderRadius: 8,
+              alignItems: 'center',
+              opacity: updating ? 0.6 : 1,
+            }}
+          >
+            {updating ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>
+                Cancelar Ticket
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </ScrollView>
   );
 }
