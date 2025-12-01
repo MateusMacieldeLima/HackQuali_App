@@ -16,19 +16,12 @@ export default function NewSchedule() {
   const [dateStr, setDateStr] = useState(''); // formato YYYY-MM-DD
   const [timeStr, setTimeStr] = useState(''); // formato HH:MM (mantido no estado mas não usado)
   const [notes, setNotes] = useState('');
-  const [residents, setResidents] = useState<any[]>([]);
-  const [selectedResident, setSelectedResident] = useState<any | null>(null);
   const [scheduleName, setScheduleName] = useState('');
-  const [residentSearch, setResidentSearch] = useState('');
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (user?.id) fetchTickets();
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user?.id) fetchResidents();
   }, [user?.id]);
 
   const fetchTickets = async () => {
@@ -52,22 +45,6 @@ export default function NewSchedule() {
     }
   };
 
-  const fetchResidents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, full_name, email')
-        .eq('role', 'resident')
-        .order('full_name', { ascending: true })
-        .limit(200);
-
-      if (error) throw error;
-      setResidents(data || []);
-    } catch (err) {
-      console.error('Error fetching residents:', err);
-    }
-  };
-
   const submit = async () => {
     // selectedTicket is optional (anexar chamado)
     if (!dateStr) return Alert.alert('Validação', 'Informe a data (YYYY-MM-DD).');
@@ -79,10 +56,8 @@ export default function NewSchedule() {
       const scheduledDate = dateStr;
       const scheduledTime = timeStr;
 
-      // If a ticket is attached but no resident explicitly selected,
-      // default the resident to the ticket requester so the resident
-      // will see the appointment in their appointments list.
-      const residentId = selectedResident?.id || selectedTicket?.requester_id || null;
+      // If a ticket is attached, default the resident to the ticket requester.
+      const residentId = selectedTicket?.requester_id || null;
 
       // Compose ISO datetime for scheduled_start using date only (time set to 00:00)
       let scheduledStart: string | null = null;
@@ -191,48 +166,6 @@ export default function NewSchedule() {
             <Text style={{ color: selectedTicket?.id === t.id ? colors.white : colors.textSecondary }}>{t.description}</Text>
           </TouchableOpacity>
         ))
-      )}
-
-      <Text style={{ marginTop: 12, color: colors.textSecondary }}>Selecionar Morador (opcional)</Text>
-      <TextInput
-        value={residentSearch}
-        onChangeText={setResidentSearch}
-        placeholder="Pesquisar por nome, email ou id"
-        style={[styles.input, { backgroundColor: colors.white, marginTop: 8 }]}
-      />
-
-      {residents.length === 0 ? (
-        <Text style={{ color: colors.textSecondary, marginTop: 8 }}>Nenhum morador encontrado.</Text>
-      ) : (
-        (() => {
-          const q = residentSearch.trim().toLowerCase();
-          if (!q) {
-            return null;
-          }
-
-          const filtered = residents.filter((r) => {
-            return (
-              String(r.full_name || '').toLowerCase().includes(q) ||
-              String(r.email || '').toLowerCase().includes(q) ||
-              String(r.id || '').toLowerCase().includes(q)
-            );
-          });
-
-          if (filtered.length === 0) {
-            return <Text style={{ color: colors.textSecondary, marginTop: 8 }}>Nenhum morador corresponde à busca.</Text>;
-          }
-
-          return filtered.map((r) => (
-            <TouchableOpacity
-              key={r.id}
-              onPress={() => setSelectedResident(selectedResident?.id === r.id ? null : r)}
-              style={[styles.card, { marginTop: 8, backgroundColor: selectedResident?.id === r.id ? colors.primary : colors.white }]}
-            >
-              <Text style={{ fontWeight: '600', color: selectedResident?.id === r.id ? colors.white : colors.text }}>{r.full_name}</Text>
-              <Text style={{ color: selectedResident?.id === r.id ? colors.white : colors.textSecondary }}>{r.email}</Text>
-            </TouchableOpacity>
-          ));
-        })()
       )}
 
       <Text style={{ marginTop: 12, color: colors.textSecondary }}>Data (YYYY-MM-DD)</Text>

@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { colors, styles } from '../../../src/styles/authStyles';
 import { supabase } from '../../../src/supabase';
@@ -37,6 +37,18 @@ export default function TechnicianSchedulingList() {
     }
   };
 
+  const deleteSchedule = async (id: string) => {
+    try {
+      const { error } = await supabase.from('scheduling').delete().eq('id', id);
+      if (error) throw error;
+      Alert.alert('Sucesso', 'Agendamento removido.');
+      fetchSchedules();
+    } catch (err) {
+      console.error('[TechnicianSchedulingList] Error deleting schedule:', err);
+      Alert.alert('Erro', 'Não foi possível excluir o agendamento.');
+    }
+  };
+
   useEffect(() => {
     fetchSchedules();
   }, [user?.id]);
@@ -62,7 +74,26 @@ export default function TechnicianSchedulingList() {
             return <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{title}</Text>;
           })()
         }
-        <FontAwesome name="calendar" size={18} color={colors.primary} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <FontAwesome name="calendar" size={18} color={colors.primary} />
+          <TouchableOpacity
+            onPress={() => router.push(`/(technician)/scheduling/${item.id}/edit`)}
+            style={{ padding: 6 }}
+          >
+            <FontAwesome name="pencil" size={16} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert('Confirmar', 'Deseja excluir este agendamento?', [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Excluir', style: 'destructive', onPress: () => deleteSchedule(item.id) },
+              ]);
+            }}
+            style={{ padding: 6 }}
+          >
+            <FontAwesome name="trash" size={16} color="#c62828" />
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={{ marginTop: 6, color: colors.textSecondary }}>
         {item.scheduled_start ? new Date(item.scheduled_start).toLocaleDateString('pt-BR') : '—'}
